@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
 
@@ -14,16 +15,15 @@ public class BuildingGenerator : MonoBehaviour
     // Start is called before the first frame update
 
     //make maps square bec of c# 2d array weirdness 
-    private int [,] map = new int[,]{
-        {1, 1, 1}, 
-        {0, 1, 0}, 
-        {0, 0, 1}};
+    
+    private static int num_maps = 2;
+    private int [][,] maps;
     private int grid_size = 10;
     void Start()
     {
         Random.InitState(seed);
         mesh = GetComponent<MeshFilter>().mesh; //do not remove
-        
+        set_maps();
         // Mesh mesh2 = create_plane(grid_size, grid_verts_per_side, 0, 0);
         // mesh.vertices = mesh2.vertices;
         // mesh.triangles = mesh2.triangles;
@@ -44,16 +44,33 @@ public class BuildingGenerator : MonoBehaviour
         
         //going to assume that my maps are square due to c# weirdness on 2d arrays
         // print(map.Length);
-        for (int row = 0; row < map.GetLength(0); row++) {
-            for (int col = 0; col < map.GetLength(1); col++) {
-                if (map[row, col] != 0) {
+        int [,] selected_map = maps[1];
+        for (int row = 0; row < selected_map.GetLength(0); row++) {
+            for (int col = 0; col < selected_map.GetLength(1); col++) {
+                if (selected_map[row, col] != 0) {
                     mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size, -row * grid_size));
                 }
             }
         }
         
     }
+    void set_maps() {
+        maps = new int[num_maps][,];
+        int [,] map = new int[,] {
+            {1, 1, 1}, 
+            {0, 1, 0}, 
+            {0, 0, 1}
+        };
 
+        int [,] map2 = new int[,] {
+            {0, 0, 1, 0},
+            {0, 1, 1, 0},
+            {0, 1, 1, 1},
+            {1, 1, 0, 1}
+        };
+        maps[0] = map;
+        maps[1] = map2;
+    }
     void OnDrawGizmos() {
         Gizmos.DrawSphere(new Vector3(0,0,0), 1);
         Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
