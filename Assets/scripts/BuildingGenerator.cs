@@ -36,9 +36,54 @@ public class BuildingGenerator : MonoBehaviour
             seen_maps.Add(map_index); //add new map to seen list.
             int [,] selected_map = maps[map_index];
 
-            for (int row = 0; row < selected_map.GetLength(0); row++) {
+            // for (int row = 0; row < selected_map.GetLength(0); row++) {
+            //     for (int col = 0; col < selected_map.GetLength(1); col++) {
+            //         if (selected_map[row, col] != 0) {
+            //             mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor));
+            //             if (left_wall_possible(selected_map, row, col)) {
+            //                 mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left));
+            //             } 
+            //             if (right_wall_possible(selected_map, row, col)) {
+            //                 mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right));
+            //             }
+            //             if (top_wall_possible(selected_map, row, col)) {
+            //                 mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - (row - 1) * grid_size, direction.top));
+            //             } if (bottom_wall_possible(selected_map, row, col)) {
+            //                 mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
+            //             }
+
+            //         }
+            //     }
+            // }
+            generate_building(selected_map, grid_size, building_offset);
+            
+        }
+
+        //place windows and doors slightly offset
+        float offset = 0.01f;
+        Vector3[] verts = {new Vector3(1.5f,0,0), new Vector3(1.5f,0,1), new Vector3(2.5f,0,0)};    
+        for (int i = 0; i < verts.Length; i++) {
+            verts[i] += new Vector3(offset, offset, offset);
+        }
+        int [] tris = {0, 1, 2};
+        Mesh m = new Mesh();
+        m.vertices = verts;
+        m.triangles = tris;
+        mesh_to_game_object(m);
+        // mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.top));
+        // mesh_to_game_object(make_grid(grid_size, grid_size, 10, 10, direction.vertical));   
+
+        // test_house();
+
+    }
+
+    void generate_building(int [,] selected_map, int grid_size, int building_offset) {
+        //loop for each floor.
+        for (int row = 0; row < selected_map.GetLength(0); row++) {
                 for (int col = 0; col < selected_map.GetLength(1); col++) {
-                    if (selected_map[row, col] != 0) {
+                    if (selected_map[row, col] > 0) {  //maybe roll to see if next floor at this spot? then loop until see all zeroes. 
+                    //generate random heights. then make walls that high in the positions. 
+                    //generate random heights with max height. then run algo max_height times and subtract one from each nonzero spot.
                         mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor));
                         if (left_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left));
@@ -51,19 +96,11 @@ public class BuildingGenerator : MonoBehaviour
                         } if (bottom_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
                         }
-
+                        //selected_map[row, col]--;
                     }
                 }
             }
-        }
-
-        // mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.top));
-        // mesh_to_game_object(make_grid(grid_size, grid_size, 10, 10, direction.vertical));   
-
-        // test_house();
-
     }
-
     bool left_wall_possible(int [,] map, int row, int col) {
         if (map[row, col] == 0) return false;
         //must be a floor at this cell.
@@ -224,6 +261,7 @@ public class BuildingGenerator : MonoBehaviour
         return temp_mesh;
 	}
 
+    //color is determined here.
     GameObject mesh_to_game_object(Mesh mesh) {
         
         mesh.RecalculateNormals();
@@ -238,6 +276,7 @@ public class BuildingGenerator : MonoBehaviour
         Renderer rend = s.GetComponent<Renderer>();
 
         rend.material.color = Color.blue;
+        if (mesh.triangles.Length == 3) rend.material.color = Color.yellow;  //hack the coloring for "window" triangle.
         // color using Texture2D
         // if (terrain_selection == Terrain.Texture2D) {
         //     Texture2D texture = make_a_texture(mesh);
@@ -292,4 +331,14 @@ public class BuildingGenerator : MonoBehaviour
         mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top));
         mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right));        
     }  
+
+    //generate a random_int from 0 to n - 1
+    private int random_int(int n) {
+        return (int) (Random.value * n);
+    }
+
+    //generate a random int from min to max - 1
+    private int random_int(int min, int max) {
+        return random_int(max - min) + min;
+    }
 }
