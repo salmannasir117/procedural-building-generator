@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
-using Unity.VisualScripting.Dependencies.Sqlite;
+
 using UnityEngine;
 
 public class BuildingGenerator : MonoBehaviour
@@ -48,10 +45,25 @@ public class BuildingGenerator : MonoBehaviour
         for (int row = 0; row < selected_map.GetLength(0); row++) {
             for (int col = 0; col < selected_map.GetLength(1); col++) {
                 if (selected_map[row, col] != 0) {
-                    mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size, -row * grid_size));
+                    mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size, -row * grid_size, direction.floor));
                 }
             }
         }
+
+        // mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.top));
+        // mesh_to_game_object(make_grid(grid_size, grid_size, 10, 10, direction.vertical));   
+
+        test_house();
+
+    }
+    
+    void test_house() {
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor));
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom));
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left));
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top));
+        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right));
+
         
     }
     void set_maps() {
@@ -99,8 +111,18 @@ public class BuildingGenerator : MonoBehaviour
         
     }
 
+    private enum direction {
+        floor,
+        left, right,  //vertical
+        top, bottom  //horizontal
+    }
     //must rewrite.
-    private Mesh make_grid (int x_size, int y_size, float x_offset, float y_offset) {
+    //all are defined by bottom left corner and move in positive directions.
+    //direction.floor = move in +x, +z
+    //direction.horizontal = move in +x, +y
+    //direciton.vertical = move in +y, +z
+    //offsets move it in the xz plane
+    private Mesh make_grid (int x_size, int y_size, float x_offset, float y_offset, direction d) {
 		Mesh temp_mesh = new Mesh();
 		
 
@@ -108,7 +130,14 @@ public class BuildingGenerator : MonoBehaviour
 		int vert_index = 0;
         for (int y = 0; y <= y_size; y++) {
 			for (int x = 0; x <= x_size; x++) {
-				verts[vert_index] = new Vector3(x + x_offset, 0, y + y_offset);   //rotate the verts based on ground, vertical, or horizontal wall
+				if (d == direction.floor) {
+                    verts[vert_index] = new Vector3(x + x_offset, 0, y + y_offset);   //rotate the verts based on ground, vertical, or horizontal wall
+                } else if (d == direction.top || d == direction.bottom) {
+                    verts[vert_index] = new Vector3(x + x_offset, y, y_offset);   //rotate the verts based on ground, vertical, or horizontal wall
+                } else if (d == direction.left || d == direction.right) {
+                    verts[vert_index] = new Vector3(x_offset, x , y + y_offset);   //rotate the verts based on ground, vertical, or horizontal wall
+                }
+
                 vert_index++;
 			}
 		}
@@ -119,7 +148,8 @@ public class BuildingGenerator : MonoBehaviour
         int triangle_index = 0, vertex_index = 0;
 		for (int y = 0; y < y_size; y++) {
 			for (int x = 0; x < x_size; x++) {
-				//triangle 1:
+                //works for floor, bottom, and left
+                //triangle 1:
 
                 tris[triangle_index] = vertex_index;    //bottom left
                 tris[triangle_index + 1] = vertex_index + x_size + 1;   //top left 
@@ -137,12 +167,16 @@ public class BuildingGenerator : MonoBehaviour
 		}
 
         temp_mesh.vertices = verts;
+        if (d == direction.top || d == direction.right) {
+            System.Array.Reverse(tris);
+        }
 		temp_mesh.triangles = tris;
         return temp_mesh;
 	}
 
     GameObject mesh_to_game_object(Mesh mesh) {
         
+        mesh.RecalculateNormals();
         GameObject s = new GameObject("terrain chunk");
         s.AddComponent<MeshFilter>();
         s.AddComponent<MeshRenderer>();
