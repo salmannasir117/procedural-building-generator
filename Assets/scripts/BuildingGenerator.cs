@@ -16,6 +16,12 @@ public class BuildingGenerator : MonoBehaviour
     private static int num_maps = 2;
     private int [][,] maps;
     private int grid_size = 10;
+
+    private enum direction {
+        floor,
+        left, right,  //vertical
+        top, bottom  //horizontal
+    }
     void Start()
     {
         Random.InitState(seed);
@@ -46,6 +52,18 @@ public class BuildingGenerator : MonoBehaviour
             for (int col = 0; col < selected_map.GetLength(1); col++) {
                 if (selected_map[row, col] != 0) {
                     mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size, -row * grid_size, direction.floor));
+                    if (left_wall_possible(selected_map, row, col)) {
+                        mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size, -row * grid_size, direction.left));
+                    } 
+                    if (right_wall_possible(selected_map, row, col)) {
+                        mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size, -row * grid_size, direction.right));
+                    }
+                    if (top_wall_possible(selected_map, row, col)) {
+                        mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size, - (row - 1) * grid_size, direction.top));
+                    } if (bottom_wall_possible(selected_map, row, col)) {
+                        mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size, - row * grid_size, direction.bottom));
+                    }
+
                 }
             }
         }
@@ -66,6 +84,44 @@ public class BuildingGenerator : MonoBehaviour
 
         
     }
+
+    bool left_wall_possible(int [,] map, int row, int col) {
+        if (map[row, col] == 0) return false;
+        //must be a floor at this cell.
+
+        if (col == 0) return true;  //if leftmost and there is floor, then a left wall must happen.
+        if (map[row, col - 1] == 0) return true;    //if there is not floor to the left, then put left floor
+        return false;
+    }
+
+    bool right_wall_possible(int [,] map, int row, int col) {
+        if (map[row, col] == 0) return false;
+        //must be a floor at this cell.
+
+        if (col == map.GetLength(1) - 1) return true;  //if rightmost and there is floor, then a right wall must happen.
+        if (map[row, col + 1] == 0) return true;    //if there is not floor to the left, then put left floor
+        return false;
+    }
+    
+    bool top_wall_possible(int [,] map, int row, int col) {
+        if (map[row, col] == 0) return false;
+        //must be a floor at this cell.
+
+        if (row == 0) return true;  //if leftmost and there is floor, then a left wall must happen.
+        if (map[row - 1, col] == 0) return true;    //if there is not floor to the left, then put left floor
+        return false;
+    }
+
+    bool bottom_wall_possible(int [,] map, int row, int col) {
+        if (map[row, col] == 0) return false;
+        //must be a floor at this cell.
+
+        if (row == map.GetLength(0) - 1) return true;  //if rightmost and there is floor, then a right wall must happen.
+        if (map[row + 1, col] == 0) return true;    //if there is not floor to the left, then put left floor
+        return false;
+    }
+    
+    
     void set_maps() {
         maps = new int[num_maps][,];
         int [,] map = new int[,] {
@@ -111,11 +167,7 @@ public class BuildingGenerator : MonoBehaviour
         
     }
 
-    private enum direction {
-        floor,
-        left, right,  //vertical
-        top, bottom  //horizontal
-    }
+    
     //must rewrite.
     //all are defined by bottom left corner and move in positive directions.
     //direction.floor = move in +x, +z
@@ -187,6 +239,7 @@ public class BuildingGenerator : MonoBehaviour
         // change the color of the object
         Renderer rend = s.GetComponent<Renderer>();
 
+        rend.material.color = Color.blue;
         // color using Texture2D
         // if (terrain_selection == Terrain.Texture2D) {
         //     Texture2D texture = make_a_texture(mesh);
