@@ -31,8 +31,8 @@ public class BuildingGenerator : MonoBehaviour
         // display_mesh(create_mesh());
         // display_mesh(create_grid(10, 10, 0, 0));
         // display_mesh(create_grid2(10, 1));
-        mesh_to_game_object(Generate(10,10,0,0));
-        mesh_to_game_object(Generate(10,10,10,0));
+        mesh_to_game_object(make_grid(10,10,0,0));
+        mesh_to_game_object(make_grid(10,10,10,0));
         
     }
 
@@ -65,7 +65,7 @@ public class BuildingGenerator : MonoBehaviour
     }
 
     //must rewrite.
-    private Mesh Generate (int x_size, int y_size, float x_offset, float y_offset) {
+    private Mesh make_grid (int x_size, int y_size, float x_offset, float y_offset) {
 		Mesh temp_mesh = new Mesh();
 		
 
@@ -100,7 +100,7 @@ public class BuildingGenerator : MonoBehaviour
 			}
             vertex_index++;             //move to next row
 		}
-        
+
         temp_mesh.vertices = verts;
 		temp_mesh.triangles = tris;
         return temp_mesh;
