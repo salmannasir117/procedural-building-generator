@@ -1,4 +1,6 @@
 
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BuildingGenerator : MonoBehaviour
@@ -6,14 +8,10 @@ public class BuildingGenerator : MonoBehaviour
     public int seed = 0;
     Mesh mesh;
     private int grid_verts_per_side = 85;
-    // private float grid_size = 8.5f;
-    // private Vector3[] verts;
-    // private int [] tris;
-    // Start is called before the first frame update
-
+   
     //make maps square bec of c# 2d array weirdness 
     
-    private static int num_maps = 2;
+    private static int num_maps = 4;
     private int [][,] maps;
     private int grid_size = 10;
 
@@ -27,43 +25,34 @@ public class BuildingGenerator : MonoBehaviour
         Random.InitState(seed);
         mesh = GetComponent<MeshFilter>().mesh; //do not remove
         set_maps();
-        // Mesh mesh2 = create_plane(grid_size, grid_verts_per_side, 0, 0);
-        // mesh.vertices = mesh2.vertices;
-        // mesh.triangles = mesh2.triangles;
-        // mesh.RecalculateNormals();
-        
        
-        // mesh.Clear();
-        // mesh.vertices = verts;
-        // mesh.triangles = tris;
-        // mesh.RecalculateNormals();
 
+        HashSet<int> seen_maps = new HashSet<int>();
 
-        // display_mesh(create_mesh());
-        // display_mesh(create_grid(10, 10, 0, 0));
-        // display_mesh(create_grid2(10, 1));
-        // mesh_to_game_object(make_grid(10,10,0,0));
-        // mesh_to_game_object(make_grid(10,10,10,0));
-        
-        //going to assume that my maps are square due to c# weirdness on 2d arrays
-        // print(map.Length);
-        int [,] selected_map = maps[1];
-        for (int row = 0; row < selected_map.GetLength(0); row++) {
-            for (int col = 0; col < selected_map.GetLength(1); col++) {
-                if (selected_map[row, col] != 0) {
-                    mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size, -row * grid_size, direction.floor));
-                    if (left_wall_possible(selected_map, row, col)) {
-                        mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size, -row * grid_size, direction.left));
-                    } 
-                    if (right_wall_possible(selected_map, row, col)) {
-                        mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size, -row * grid_size, direction.right));
+        for (int i = 0; i < 3; i++) {       //run three times to generate 3 buildings. 
+            int building_offset = i * 100;
+            int map_index = Random.Range(0, num_maps);
+            while (seen_maps.Contains(map_index)) map_index = Random.Range(0, num_maps - 1);    //get new map
+            seen_maps.Add(map_index); //add new map to seen list.
+            int [,] selected_map = maps[map_index];
+
+            for (int row = 0; row < selected_map.GetLength(0); row++) {
+                for (int col = 0; col < selected_map.GetLength(1); col++) {
+                    if (selected_map[row, col] != 0) {
+                        mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor));
+                        if (left_wall_possible(selected_map, row, col)) {
+                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left));
+                        } 
+                        if (right_wall_possible(selected_map, row, col)) {
+                            mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right));
+                        }
+                        if (top_wall_possible(selected_map, row, col)) {
+                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - (row - 1) * grid_size, direction.top));
+                        } if (bottom_wall_possible(selected_map, row, col)) {
+                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
+                        }
+
                     }
-                    if (top_wall_possible(selected_map, row, col)) {
-                        mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size, - (row - 1) * grid_size, direction.top));
-                    } if (bottom_wall_possible(selected_map, row, col)) {
-                        mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size, - row * grid_size, direction.bottom));
-                    }
-
                 }
             }
         }
@@ -71,18 +60,8 @@ public class BuildingGenerator : MonoBehaviour
         // mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.top));
         // mesh_to_game_object(make_grid(grid_size, grid_size, 10, 10, direction.vertical));   
 
-        test_house();
+        // test_house();
 
-    }
-    
-    void test_house() {
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor));
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom));
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left));
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top));
-        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right));
-
-        
     }
 
     bool left_wall_possible(int [,] map, int row, int col) {
@@ -136,8 +115,27 @@ public class BuildingGenerator : MonoBehaviour
             {0, 1, 1, 1},
             {1, 1, 0, 1}
         };
+
+        int [,] map3 = new int[,] {
+            {1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0},
+            {1, 0, 0, 0, 0},
+        };
+
+        int [,] map4 = new int[,] {
+            {1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 1},
+            {1, 0, 0, 0, 1},
+            {1, 0, 0, 0, 1},
+            {1, 0, 0, 0, 1},
+        };
+
         maps[0] = map;
         maps[1] = map2;
+        maps[2] = map3;
+        maps[3] = map4;
     }
     void OnDrawGizmos() {
         Gizmos.DrawSphere(new Vector3(0,0,0), 1);
@@ -264,58 +262,6 @@ public class BuildingGenerator : MonoBehaviour
         return new_mesh;
     }
 
-    //need cell_size to divide grid_size
-    private Mesh create_grid2(float grid_size, float cell_size) {
-        int steps = (int) (grid_size / cell_size);
-
-        // Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
-        // for (int i = 0; i <= steps; i++) {
-        //     for (int j = 0; j <= steps; j++) {
-        //         float x_pos = cell_size * i; 
-        //         float y_pos = cell_size * j;
-        //         verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
-        //     }
-        // }
-
-        int xSize = 10, ySize = 10;
-        Vector3[] vertices = new Vector3[(xSize + 1) * (ySize + 1)];
-		for (int i = 0, y = 0; y <= ySize; y++) {
-			for (int x = 0; x <= xSize; x++, i++) {
-				vertices[i] = new Vector3(x, y);
-			}
-		}
-        int[] tris = new int[steps * steps * 6];
-        int ntris = 0;
-        // for (int i = 0; i < steps; i++) {
-        //     for (int j = 0; j < steps; j++) {
-        //         int tl, tr, bl, br;
-        //         tl = j + (i + 1) * (steps);
-        //         tr = j + (i + 1) * (steps) + 1;
-        //         bl = j + i * (steps);
-        //         br = j + i * (steps) + 1;
-        //         MakeQuad(tl, tr, br, bl, ntris, tris);
-        //         // MakeQuad(bl, br, tr, tl, ntris, tris);   //direction check
-                
-        //         ntris += 2;
-        //     }
-        // }
-        int[] triangles = new int[xSize * ySize * 6];
-        for (int ti = 0, vi = 0, y = 0; y < ySize; y++, vi++) {
-			for (int x = 0; x < xSize; x++, ti += 6, vi++) {
-				triangles[ti] = vi;
-				triangles[ti + 3] = triangles[ti + 2] = vi + 1;
-				triangles[ti + 4] = triangles[ti + 1] = vi + xSize + 1;
-				triangles[ti + 5] = vi + xSize + 2;
-			}
-		}
-		Mesh m = new Mesh();
-        m.vertices = vertices;
-        mesh.triangles = triangles;
-        
-        // m.triangles = tris;
-        return m;
-    }
-
     // make a triangle from three vertex indices (clockwise order)
 	void MakeTri(int i1, int i2, int i3, int ntris, int [] tris) {
 		int index = ntris * 3;  // figure out the base index for storing triangle indices
@@ -331,110 +277,19 @@ public class BuildingGenerator : MonoBehaviour
 		MakeTri (i3, i4, i1, ntris + 1, tris);
 	}
     
-    private Mesh create_grid(float grid_size, int grid_verts_per_side, float x_off, float y_off) {
-        Vector3[] verts = new Vector3[grid_verts_per_side * grid_verts_per_side];  	                // the vertices of the mesh
-	    int[] tris = new int[2 * (grid_verts_per_side - 1) * (grid_verts_per_side - 1) * 3];      	// the triangles of the mesh (triplets of integer references to vertices)
-	    Mesh mesh = new Mesh();
-        Color[] colors = new Color[verts.Length];;
-        Vector2[] uvs = new Vector2[verts.Length];
-
-        //generate the verticies for the plane
-        for (int i = 0; i < grid_verts_per_side ; i++) {
-            for (int j = 0; j < grid_verts_per_side; j++) {
-                int vert_index = i * grid_verts_per_side + j;
-                float x_index = grid_size / grid_verts_per_side * i + x_off;
-                float y_index = grid_size / grid_verts_per_side * j + y_off;
-                
-                // float noise = get_perlin_noise(x_index, y_index, x_offset, y_offset);
-                float noise = 0;
-                // place_plant(x_index, noise, y_index);
-                verts[vert_index] = new Vector3(x_index, noise, y_index);
-                uvs[vert_index] = new Vector2(x_index / grid_size, (grid_size - y_index) / grid_size);
-                // colors[vert_index] = get_color(noise);
-            }
-        }
-
-        //generate triangles
-        int ntris = 0;
-        for (int i = 0; i < verts.Length - 1 - grid_verts_per_side - 1; i++) {
-            if (i % grid_verts_per_side != grid_verts_per_side - 1 || i == 0) {
-                int tl, tr, bl, br;
-                tl = i;
-                tr = i + 1;
-                bl = i + grid_verts_per_side;
-                br = i + grid_verts_per_side + 1;
-                MakeQuad(tl, tr, br, bl, ntris, tris);
-                // MakeQuad(bl, br, tr, tl, ntris, tris);   //direction check
-                
-                ntris += 2;
-            }
-        }
-
-        mesh.vertices = verts;
-        mesh.triangles = tris;
-        mesh.uv = uvs;
-        mesh.colors = colors;
-        mesh.RecalculateNormals();
-
-        return mesh;
-    }
     private void display_mesh(Mesh new_mesh) {
         // mesh = GetComponent<MeshFilter>.mesh;
         mesh.Clear();
         mesh.vertices = new_mesh.vertices;
         mesh.triangles = new_mesh.triangles;
         mesh.RecalculateNormals();
-    }
+    }  
 
-    //create a new chunk of terrain as a mesh
-    private Mesh create_plane(float grid_size, int grid_verts_per_side, float x_off, float y_off) {
-        Vector3[] verts = new Vector3[grid_verts_per_side * grid_verts_per_side];  	                // the vertices of the mesh
-	    int[] tris = new int[2 * (grid_verts_per_side - 1) * (grid_verts_per_side - 1) * 3];      	// the triangles of the mesh (triplets of integer references to vertices)
-	    Mesh mesh = new Mesh();
-        Color[] colors = new Color[verts.Length];;
-        Vector2[] uvs = new Vector2[verts.Length];
-
-        //generate the verticies for the plane
-        for (int i = 0; i < grid_verts_per_side ; i++) {
-            for (int j = 0; j < grid_verts_per_side; j++) {
-                int vert_index = i * grid_verts_per_side + j;
-                float x_index = grid_size / grid_verts_per_side * i + x_off;
-                float y_index = grid_size / grid_verts_per_side * j + y_off;
-                
-                // float noise = get_perlin_noise(x_index, y_index, x_offset, y_offset);
-                float noise = 0;
-                // place_plant(x_index, noise, y_index);
-                verts[vert_index] = new Vector3(x_index, noise, y_index);
-                uvs[vert_index] = new Vector2(x_index / grid_size, (grid_size - y_index) / grid_size);
-                // colors[vert_index] = get_color(noise);
-            }
-        }
-
-        //generate triangles
-        int ntris = 0;
-        for (int i = 0; i < verts.Length - 1 - grid_verts_per_side - 1; i++) {
-            if (i % grid_verts_per_side != grid_verts_per_side - 1 || i == 0) {
-                int tl, tr, bl, br;
-                tl = i;
-                tr = i + 1;
-                bl = i + grid_verts_per_side;
-                br = i + grid_verts_per_side + 1;
-                MakeQuad(tl, tr, br, bl, ntris, tris);
-                // MakeQuad(bl, br, tr, tl, ntris, tris);   //direction check
-                
-                ntris += 2;
-            }
-        }
-
-        mesh.vertices = verts;
-        mesh.triangles = tris;
-        mesh.uv = uvs;
-        mesh.colors = colors;
-        mesh.RecalculateNormals();
-
-        return mesh;
-    }
-
-    
-
+    void test_house() {
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor));
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom));
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left));
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top));
+        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right));        
+    }  
 }
