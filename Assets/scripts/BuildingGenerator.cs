@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
 
 public class BuildingGenerator : MonoBehaviour
@@ -7,10 +8,17 @@ public class BuildingGenerator : MonoBehaviour
     public int seed = 0;
     Mesh mesh;
     private int grid_verts_per_side = 85;
-    private float grid_size = 8.5f;
+    // private float grid_size = 8.5f;
     // private Vector3[] verts;
     // private int [] tris;
     // Start is called before the first frame update
+
+    //make maps square bec of c# 2d array weirdness 
+    private int [,] map = new int[,]{
+        {1, 1, 1}, 
+        {0, 1, 0}, 
+        {0, 0, 1}};
+    private int grid_size = 10;
     void Start()
     {
         Random.InitState(seed);
@@ -31,8 +39,18 @@ public class BuildingGenerator : MonoBehaviour
         // display_mesh(create_mesh());
         // display_mesh(create_grid(10, 10, 0, 0));
         // display_mesh(create_grid2(10, 1));
-        mesh_to_game_object(make_grid(10,10,0,0));
-        mesh_to_game_object(make_grid(10,10,10,0));
+        // mesh_to_game_object(make_grid(10,10,0,0));
+        // mesh_to_game_object(make_grid(10,10,10,0));
+        
+        //going to assume that my maps are square due to c# weirdness on 2d arrays
+        // print(map.Length);
+        for (int row = 0; row < map.GetLength(0); row++) {
+            for (int col = 0; col < map.GetLength(1); col++) {
+                if (map[row, col] != 0) {
+                    mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size, -row * grid_size));
+                }
+            }
+        }
         
     }
 
