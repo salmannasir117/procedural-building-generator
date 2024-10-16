@@ -14,6 +14,7 @@ public class BuildingGenerator : MonoBehaviour
     private static int num_maps = 4;
     private int [][,] maps;
     private int grid_size = 10;
+    GameObject roof_go;
 
     private enum direction {
         floor,
@@ -55,28 +56,152 @@ public class BuildingGenerator : MonoBehaviour
             //         }
             //     }
             // }
-            generate_building(selected_map, grid_size, building_offset);
+            // generate_building(selected_map, grid_size, building_offset);
             
         }
 
         //place windows and doors slightly offset
-        float offset = 0.01f;
-        Vector3[] verts = {new Vector3(1.5f,0,0), new Vector3(1.5f,0,1), new Vector3(2.5f,0,0)};    
-        for (int i = 0; i < verts.Length; i++) {
-            verts[i] += new Vector3(offset, offset, offset);
-        }
-        int [] tris = {0, 1, 2};
-        Mesh m = new Mesh();
-        m.vertices = verts;
-        m.triangles = tris;
-        mesh_to_game_object(m);
+        // float offset = 0.01f;
+        // Vector3[] verts = {new Vector3(1.5f,0,0), new Vector3(1.5f,0,1), new Vector3(2.5f,0,0)};    
+        // for (int i = 0; i < verts.Length; i++) {
+        //     verts[i] += new Vector3(offset, offset, offset);
+        // }
+        // int [] tris = {0, 1, 2};
+        // Mesh m = new Mesh();
+        // m.vertices = verts;
+        // m.triangles = tris;
+        // mesh_to_game_object(m);
         // mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.top));
         // mesh_to_game_object(make_grid(grid_size, grid_size, 10, 10, direction.vertical));   
 
         // test_house();
-
+       
+        GameObject roof_1 = generate_cross_hip_roof();
+        // GameObject roof_2 = generate_normal_roof();
+        // roof_2.transform.Rotate(new Vector3(0, 90, 0));
+        // roof_2.transform.Translate(new Vector3(-grid_size, 0, -grid_size / 2));
     }
 
+    //generate a normal roof - basically a triangular prism. 
+    GameObject generate_normal_roof() {
+        int height = grid_size / 2;
+        int midpoint = grid_size / 2;
+        Vector3[] verts = {
+            //base 
+            new Vector3(0, 0, 0), new Vector3(0, 0, grid_size), new Vector3(grid_size, 0, grid_size), new Vector3(grid_size, 0, 0),
+            //front facing triangle
+            new Vector3(0, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, 0),
+            //back facing triangle
+            new Vector3(0, 0, grid_size), new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, grid_size), 
+            //left quad
+            new Vector3(0, 0, 0), new Vector3(0, 0, grid_size), new Vector3(midpoint, height, grid_size), new Vector3(midpoint, height, 0), 
+            //right quad
+            new Vector3(grid_size, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, grid_size),   
+            
+        };
+        int[] tris = {
+            //base 
+            // 0, 1, 2, 0, 2, 3,
+            2, 1, 0, 3, 2, 0,   //order so you see it from the bottom.
+            //front facing triangle
+            4, 5, 6,
+            //back facing triangle
+            7, 8, 9,
+            //left quad
+            10, 11, 12, 10, 12, 13,
+            //right quad
+            14, 15, 16, 15, 17, 16,
+
+
+
+        };
+        Mesh roof = new Mesh();
+        roof.vertices = verts;
+        roof.triangles = tris;
+
+        roof.RecalculateNormals();
+        GameObject s = new GameObject("roof");
+        s.AddComponent<MeshFilter>();
+        s.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        s.GetComponent<MeshFilter>().mesh = roof;
+
+        // change the color of the object
+        Renderer rend = s.GetComponent<Renderer>();
+
+        rend.material.color = Color.green;
+        // s.transform.Rotate(new Vector3(0, 90, 0));
+        roof_go = s;
+        return s;
+    }
+
+    GameObject generate_cross_hip_roof() {
+        int height = grid_size / 2;
+        int midpoint = grid_size / 2;
+        Vector3[] verts = {
+            //base 0-3
+            new Vector3(0, 0, 0), new Vector3(0, 0, grid_size), new Vector3(grid_size, 0, grid_size), new Vector3(grid_size, 0, 0),
+            //front facing triangle 4-6
+            new Vector3(0, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, 0),
+            //back facing triangle 7-9
+            new Vector3(0, 0, midpoint), new Vector3(grid_size, 0, midpoint), new Vector3(midpoint, height, midpoint), 
+            //left quad 10-13
+            new Vector3(0, 0, 0), new Vector3(0, 0, midpoint), new Vector3(midpoint, height, midpoint), new Vector3(midpoint, height, 0), 
+            // //right quad 14-17
+            new Vector3(grid_size, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, midpoint),   
+            // left triangle 18-20
+            new Vector3(0, 0, grid_size), new Vector3(0, height, midpoint), new Vector3(0, 0, 0),
+            //connector triangle 21-23
+            new Vector3(0,0,0), new Vector3(0, height, midpoint), new Vector3(midpoint, height, midpoint),
+            //back wall 24-27
+            new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, midpoint), new Vector3(0, height, midpoint), new Vector3(0, 0, grid_size),
+            
+        };
+        int[] tris = {
+            //base 
+            // 0, 1, 2, 0, 2, 3,
+            2, 1, 0, 3, 2, 0,   //order so you see it from the bottom.
+            //front facing triangle
+            4, 5, 6,
+            //back facing triangle
+            7, 8, 9,
+            //left quad
+            // 10, 11, 12, 
+            10, 12, 13,
+            //right quad
+            14, 15, 16, 15, 17, 16,
+            //left triangle
+            18,19,20,
+            //connector triangle
+            21,22,23,
+            //back wall
+            24, 25, 26, 24, 26, 27,
+
+
+
+        };
+        Mesh roof = new Mesh();
+        roof.vertices = verts;
+        roof.triangles = tris;
+
+        roof.RecalculateNormals();
+        GameObject s = new GameObject("roof");
+        s.AddComponent<MeshFilter>();
+        s.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        s.GetComponent<MeshFilter>().mesh = roof;
+
+        // change the color of the object
+        Renderer rend = s.GetComponent<Renderer>();
+
+        rend.material.color = Color.green;
+        // s.transform.Rotate(new Vector3(0, 90, 0));
+        roof_go = s;
+        return s;
+
+    }
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
@@ -199,7 +324,7 @@ public class BuildingGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        // roof_go.transform.Rotate(new Vector3(0, -0.1f, 0));
     }
 
     
