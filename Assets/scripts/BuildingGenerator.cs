@@ -77,14 +77,20 @@ public class BuildingGenerator : MonoBehaviour
 
         // test_house();
        
-        GameObject roof_1 = generate_cross_gable_roof();
+        GameObject roof_1 = generate_cross_hip_roof(new Vector3(0, 0, 0), new Vector3(0,0,0));
         // GameObject roof_2 = generate_normal_roof();
         // roof_2.transform.Rotate(new Vector3(0, 90, 0));
         // roof_2.transform.Translate(new Vector3(-grid_size, 0, -grid_size / 2));
+        // roof_go.transform.Translate(new Vector3(- grid_size  / 2, 0,  -grid_size / 2));
+        // rotate_right(roof_1);
+        rotate_left(roof_1);
+        rotate_left(roof_1);
+        
+        
     }
 
     //generate a normal roof - basically a triangular prism. 
-    GameObject generate_normal_roof() {
+    GameObject generate_normal_roof(Vector3 rotate, Vector3 translate) {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
         Vector3[] verts = {
@@ -137,7 +143,7 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
-    GameObject generate_cross_hip_roof() {
+    GameObject generate_cross_hip_roof(Vector3 rotate, Vector3 translate) {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
         Vector3[] verts = {
@@ -198,7 +204,7 @@ public class BuildingGenerator : MonoBehaviour
 
     }
 
-    GameObject generate_cross_gable_roof() {
+    GameObject generate_cross_gable_roof(Vector3 rotate, Vector3 translate) {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
         Vector3[] verts = {
@@ -251,7 +257,7 @@ public class BuildingGenerator : MonoBehaviour
         roof.triangles = tris;
 
         roof.RecalculateNormals();
-        GameObject s = new GameObject("hip roof");
+        GameObject s = new GameObject("gable roof");
         s.AddComponent<MeshFilter>();
         s.AddComponent<MeshRenderer>();
         
@@ -266,6 +272,18 @@ public class BuildingGenerator : MonoBehaviour
         roof_go = s;
         return s;
     }
+
+    //i've rotated twice in a row with no problem with these methods.
+    void rotate_right(GameObject gm) {
+        gm.transform.Rotate(new Vector3(0, 90, 0));
+        gm.transform.Translate(new Vector3(-grid_size, 0, 0));
+    }
+
+    void rotate_left(GameObject gm) {
+        gm.transform.Rotate(new Vector3(0, -90, 0));
+        gm.transform.Translate(new Vector3(0, 0, -grid_size));
+    }
+
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
@@ -389,6 +407,10 @@ public class BuildingGenerator : MonoBehaviour
     void Update()
     {
         // roof_go.transform.Rotate(new Vector3(0, -0.1f, 0));
+        // roof_go.transform.Rotate(new Vector3(0, -0.1f, 0));
+        // roof_go.transform.Translate(new Vector3( grid_size  / 2, grid_size / 2, 0));
+        
+        // roof_go.transform.RotateAround(new Vector3(grid_size / 2, grid_size / 2, 0),)
     }
 
     
