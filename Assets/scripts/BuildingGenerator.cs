@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
 using UnityEngine;
 
 public class BuildingGenerator : MonoBehaviour
@@ -76,7 +77,7 @@ public class BuildingGenerator : MonoBehaviour
 
         // test_house();
        
-        GameObject roof_1 = generate_cross_hip_roof();
+        GameObject roof_1 = generate_cross_gable_roof();
         // GameObject roof_2 = generate_normal_roof();
         // roof_2.transform.Rotate(new Vector3(0, 90, 0));
         // roof_2.transform.Translate(new Vector3(-grid_size, 0, -grid_size / 2));
@@ -145,9 +146,9 @@ public class BuildingGenerator : MonoBehaviour
             //front facing triangle 4-6
             new Vector3(0, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, 0),
             
-            //left quad 7-10
+            //left quad 7-10 (please note that point 8 is extraneous... can remove at risk of breaking things but the optimzation isn't likely worth it)
             new Vector3(0, 0, 0), new Vector3(0, 0, midpoint), new Vector3(midpoint, height, midpoint), new Vector3(midpoint, height, 0), 
-            // //right quad 11-14   (please note that point 8 is extraneous... can remove at risk of breaking things but the optimzation isn't likely worth it)
+            // //right quad 11-14   
             new Vector3(grid_size, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, midpoint),   
             // left triangle 15-17
             new Vector3(0, 0, grid_size), new Vector3(0, height, midpoint), new Vector3(0, 0, 0),
@@ -174,8 +175,6 @@ public class BuildingGenerator : MonoBehaviour
             //back wall
             21, 22, 23, 21, 23, 24,
 
-
-
         };
         Mesh roof = new Mesh();
         roof.vertices = verts;
@@ -197,6 +196,75 @@ public class BuildingGenerator : MonoBehaviour
         roof_go = s;
         return s;
 
+    }
+
+    GameObject generate_cross_gable_roof() {
+        int height = grid_size / 2;
+        int midpoint = grid_size / 2;
+        Vector3[] verts = {
+            //base 0-3
+            new Vector3(0, 0, 0), new Vector3(0, 0, grid_size), new Vector3(grid_size, 0, grid_size), new Vector3(grid_size, 0, 0),
+            //front facing triangle 4-6
+            new Vector3(0, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, 0),
+            
+            //left quad 7-10 (please note that point 8 is extraneous... can remove at risk of breaking things but the optimzation isn't likely worth it)
+            new Vector3(0, 0, 0), new Vector3(0, 0, midpoint), new Vector3(midpoint, height, midpoint), new Vector3(midpoint, height, 0), 
+            // //right quad 11-14 (please note point 14 is also extraneous)
+            new Vector3(grid_size, 0, 0), new Vector3(grid_size, height, midpoint), new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, midpoint),   
+            // left triangle 15-17
+            new Vector3(0, 0, grid_size), new Vector3(0, height, midpoint), new Vector3(0, 0, 0),
+            //connector triangle 18-20
+            new Vector3(0,0,0), new Vector3(0, height, midpoint), new Vector3(midpoint, height, midpoint),
+            //back wall 21-24
+            new Vector3(grid_size, 0, grid_size), new Vector3(grid_size, height, midpoint), new Vector3(0, height, midpoint), new Vector3(0, 0, grid_size),
+            //connector triangle right 25-27
+            new Vector3(grid_size, 0, 0), new Vector3(midpoint, height, 0), new Vector3(midpoint, height, midpoint),
+            //connector triangle right 28-30
+            new Vector3(grid_size, 0, 0), new Vector3(midpoint, height, midpoint), new Vector3(grid_size, height, midpoint),
+            
+        };
+        int[] tris = {
+            //base 
+            // 0, 1, 2, 0, 2, 3,
+            2, 1, 0, 3, 2, 0,   //order so you see it from the bottom.
+            //front facing triangle
+            4, 5, 6,
+            //left quad
+            7, 9, 10,
+            //right quad
+            // 11, 12, 13, 12, 14, 13, 
+            11, 12, 13,
+            //left triangle
+            15, 16, 17,
+            //connector triangle
+            18, 19, 20,
+            //back wall
+            21, 22, 23, 21, 23, 24,
+            //connector triangle right 
+            25, 26, 27,
+            //connector triangle right
+            28, 29, 30,
+
+        };
+        Mesh roof = new Mesh();
+        roof.vertices = verts;
+        roof.triangles = tris;
+
+        roof.RecalculateNormals();
+        GameObject s = new GameObject("hip roof");
+        s.AddComponent<MeshFilter>();
+        s.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        s.GetComponent<MeshFilter>().mesh = roof;
+
+        // change the color of the object
+        Renderer rend = s.GetComponent<Renderer>();
+
+        rend.material.color = Color.green;
+        // s.transform.Rotate(new Vector3(0, 90, 0));
+        roof_go = s;
+        return s;
     }
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
         //loop for each floor.
