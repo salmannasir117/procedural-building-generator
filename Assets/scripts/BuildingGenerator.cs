@@ -144,17 +144,16 @@ public class BuildingGenerator : MonoBehaviour
             new Vector3(0, 0, 0), new Vector3(0, 0, grid_size), new Vector3(grid_size, 0, grid_size), new Vector3(grid_size, 0, 0),
             //front facing triangle 4-6
             new Vector3(0, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, 0),
-            //back facing triangle 7-9
-            new Vector3(0, 0, midpoint), new Vector3(grid_size, 0, midpoint), new Vector3(midpoint, height, midpoint), 
-            //left quad 10-13
+            
+            //left quad 7-10
             new Vector3(0, 0, 0), new Vector3(0, 0, midpoint), new Vector3(midpoint, height, midpoint), new Vector3(midpoint, height, 0), 
-            // //right quad 14-17
+            // //right quad 11-14   (please note that point 8 is extraneous... can remove at risk of breaking things but the optimzation isn't likely worth it)
             new Vector3(grid_size, 0, 0), new Vector3(midpoint, height, 0), new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, midpoint),   
-            // left triangle 18-20
+            // left triangle 15-17
             new Vector3(0, 0, grid_size), new Vector3(0, height, midpoint), new Vector3(0, 0, 0),
-            //connector triangle 21-23
+            //connector triangle 18-20
             new Vector3(0,0,0), new Vector3(0, height, midpoint), new Vector3(midpoint, height, midpoint),
-            //back wall 24-27
+            //back wall 21-24
             new Vector3(grid_size, 0, grid_size), new Vector3(midpoint, height, midpoint), new Vector3(0, height, midpoint), new Vector3(0, 0, grid_size),
             
         };
@@ -164,19 +163,16 @@ public class BuildingGenerator : MonoBehaviour
             2, 1, 0, 3, 2, 0,   //order so you see it from the bottom.
             //front facing triangle
             4, 5, 6,
-            //back facing triangle
-            7, 8, 9,
             //left quad
-            // 10, 11, 12, 
-            10, 12, 13,
+            7, 9, 10,
             //right quad
-            14, 15, 16, 15, 17, 16,
+            11, 12, 13, 12, 14, 13, 
             //left triangle
-            18,19,20,
+            15, 16, 17,
             //connector triangle
-            21,22,23,
+            18, 19, 20,
             //back wall
-            24, 25, 26, 24, 26, 27,
+            21, 22, 23, 21, 23, 24,
 
 
 
@@ -186,7 +182,7 @@ public class BuildingGenerator : MonoBehaviour
         roof.triangles = tris;
 
         roof.RecalculateNormals();
-        GameObject s = new GameObject("roof");
+        GameObject s = new GameObject("hip roof");
         s.AddComponent<MeshFilter>();
         s.AddComponent<MeshRenderer>();
         
