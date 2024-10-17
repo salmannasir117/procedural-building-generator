@@ -87,8 +87,8 @@ public class BuildingGenerator : MonoBehaviour
         // rotate_left(roof_1);
 
         // generate_building(maps[0], grid_size, 0);
-        generate_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
-        
+        generate_double_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
+
     }
 
     //generate a normal roof - basically a triangular prism. 
@@ -375,6 +375,19 @@ public class BuildingGenerator : MonoBehaviour
 
         rend.material.mainTexture = texture;
         return s;
+    }
+
+    GameObject generate_double_door(Vector3 rotate, Vector3 translate, Texture2D texture) {
+        GameObject temp = generate_door(rotate, translate, texture);
+        Mesh mesh = temp.GetComponent<MeshFilter>().mesh;
+        Vector3[] verts = mesh.vertices;
+        verts[2].x *= 2;
+        verts[3].x *= 2;
+        mesh.vertices = verts;
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+
+        return temp;
     }
     //i've rotated twice in a row with no problem with these methods.
     void rotate_right(GameObject gm) {
