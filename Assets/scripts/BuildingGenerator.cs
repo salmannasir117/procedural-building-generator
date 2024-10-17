@@ -77,14 +77,16 @@ public class BuildingGenerator : MonoBehaviour
 
         // test_house();
        
-        GameObject roof_1 = generate_cross_hip_roof(new Vector3(0, 0, 0), new Vector3(0,0,0));
+        // GameObject roof_1 = generate_cross_hip_roof(new Vector3(0, 0, 0), new Vector3(0,0,0));
         // GameObject roof_2 = generate_normal_roof();
         // roof_2.transform.Rotate(new Vector3(0, 90, 0));
         // roof_2.transform.Translate(new Vector3(-grid_size, 0, -grid_size / 2));
         // roof_go.transform.Translate(new Vector3(- grid_size  / 2, 0,  -grid_size / 2));
         // rotate_right(roof_1);
-        rotate_left(roof_1);
-        rotate_left(roof_1);
+        // rotate_left(roof_1);
+        // rotate_left(roof_1);
+
+        generate_building(maps[0], grid_size, 0);
         
         
     }
@@ -284,6 +286,17 @@ public class BuildingGenerator : MonoBehaviour
         gm.transform.Translate(new Vector3(0, 0, -grid_size));
     }
 
+    Texture2D get_texture() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
@@ -425,6 +438,8 @@ public class BuildingGenerator : MonoBehaviour
 		
 
         Vector3[] verts = new Vector3[(x_size + 1) * (y_size + 1)];
+        Vector2[] uvs = new Vector2[verts.Length];
+
 		int vert_index = 0;
         for (int y = 0; y <= y_size; y++) {
 			for (int x = 0; x <= x_size; x++) {
@@ -435,7 +450,7 @@ public class BuildingGenerator : MonoBehaviour
                 } else if (d == direction.left || d == direction.right) {
                     verts[vert_index] = new Vector3(x_offset, x , y + y_offset);   //rotate the verts based on ground, vertical, or horizontal wall
                 }
-
+                uvs[vert_index] = new Vector2((float) x / x_size, (float) y / y_size);
                 vert_index++;
 			}
 		}
@@ -469,6 +484,7 @@ public class BuildingGenerator : MonoBehaviour
             System.Array.Reverse(tris);
         }
 		temp_mesh.triangles = tris;
+        temp_mesh.uv = uvs;
         return temp_mesh;
 	}
 
@@ -486,8 +502,10 @@ public class BuildingGenerator : MonoBehaviour
         // change the color of the object
         Renderer rend = s.GetComponent<Renderer>();
 
-        rend.material.color = Color.blue;
+        // rend.material.color = Color.blue;
         if (mesh.triangles.Length == 3) rend.material.color = Color.yellow;  //hack the coloring for "window" triangle.
+        
+        rend.material.mainTexture = get_texture();
         // color using Texture2D
         // if (terrain_selection == Terrain.Texture2D) {
         //     Texture2D texture = make_a_texture(mesh);
