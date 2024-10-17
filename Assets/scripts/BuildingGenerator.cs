@@ -297,6 +297,88 @@ public class BuildingGenerator : MonoBehaviour
         image.Apply();
         return image;
     }
+
+    Texture2D get_texture_checkerboard() {
+        Texture2D image = new Texture2D(128, 128);
+        int cell_size = 10;
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
+                if ((x / cell_size + y / cell_size) % 2 == 0) color = Color.black;
+                else color = Color.white;
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
+
+    Texture2D get_texture_brick() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
+                Color light = new Color(221.0f / 255, 125.0f / 255, 125.0f / 255);
+                Color dark = new Color(132 / 255.0f, 32 / 255.0f, 32 / 255.0f);
+                // color = Color.Lerp(light, dark, Mathf.PerlinNoise(2 * x, 2 * y) / 2);
+                // color = Color.Lerp(light, dark, (float) x / image.height);
+                color = Color.Lerp(light, dark, Random.value);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
+
+    Texture2D get_texture_stone() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color light = new Color(164,172,180) / 255.0f;
+                Color dark = new Color(134,152,166) / 255.0f;
+                float control_knob = Random.value;
+                control_knob = Mathf.Sqrt(control_knob);        //make probability dist. shift to right side
+                Color color = Color.Lerp(light, dark, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
+
+    Texture2D get_texture_blue_window() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color dark = new Color(66, 89, 195) / 255.0f;
+                Color light = new Color(158, 194, 255) / 255.0f;
+                float control_knob = (float)(x * y) / (image.height * image.width);
+                Color color = Color.Lerp(dark, light, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
+
+    Texture2D get_texture_brown_door() {
+       int cell_size = 10;
+       Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color;
+                Color dark = new Color(110, 38, 14) / 255.0f;
+                Color light = new Color(233, 116, 81) / 255.0f;
+                if ((x / cell_size) % 2 == 0) color = dark;
+                else color = light;
+                // float control_knob = (float)(x * y) / (image.height * image.width);
+                // Color color = Color.Lerp(dark, light, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
@@ -505,7 +587,7 @@ public class BuildingGenerator : MonoBehaviour
         // rend.material.color = Color.blue;
         if (mesh.triangles.Length == 3) rend.material.color = Color.yellow;  //hack the coloring for "window" triangle.
         
-        rend.material.mainTexture = get_texture();
+        rend.material.mainTexture = get_texture_brown_door();
         // color using Texture2D
         // if (terrain_selection == Terrain.Texture2D) {
         //     Texture2D texture = make_a_texture(mesh);
