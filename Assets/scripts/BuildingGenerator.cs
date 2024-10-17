@@ -86,8 +86,8 @@ public class BuildingGenerator : MonoBehaviour
         // rotate_left(roof_1);
         // rotate_left(roof_1);
 
-        generate_building(maps[0], grid_size, 0);
-        
+        // generate_building(maps[0], grid_size, 0);
+        generate_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
         
     }
 
@@ -275,6 +275,107 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
+    GameObject generate_window(Vector3 rotate, Vector3 translate, Texture2D texture) {
+        Vector3[] verts = {
+            new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0),
+        };
+
+        int[] tris = {
+            0, 1, 2, 0, 2, 3,
+        };
+
+        Vector2[] uvs = {
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0),
+        };
+
+        Mesh window = new Mesh();
+        window.vertices = verts;
+        window.triangles = tris;
+        window.uv = uvs;
+        window.RecalculateNormals();
+    
+         GameObject s = new GameObject("window");
+        s.AddComponent<MeshFilter>();
+        s.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        s.GetComponent<MeshFilter>().mesh = window;
+
+        // change the color of the object
+        Renderer rend = s.GetComponent<Renderer>();
+
+        rend.material.mainTexture = texture;
+        return s;
+    }
+
+    GameObject generate_window_round(Vector3 rotate, Vector3 translate, Texture2D texture) {
+        Vector3[] verts = {
+            new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 0, 0), new Vector3(0, -1, 0), new Vector3(-1, 0, 0)
+        };
+
+        int[] tris = {
+            0, 1, 2, 
+            0, 2, 3,
+            0, 3, 4,
+            0, 4, 1,
+        };
+
+        Vector2[] uvs = {
+            new Vector2(0.5f, 0.5f), new Vector2(0, 1), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0,0),
+        };
+
+        Mesh window = new Mesh();
+        window.vertices = verts;
+        window.triangles = tris;
+        window.uv = uvs;
+        window.RecalculateNormals();
+    
+         GameObject s = new GameObject("window");
+        s.AddComponent<MeshFilter>();
+        s.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        s.GetComponent<MeshFilter>().mesh = window;
+
+        // change the color of the object
+        Renderer rend = s.GetComponent<Renderer>();
+
+        rend.material.mainTexture = texture;
+        return s;
+    }
+
+    GameObject generate_door(Vector3 rotate, Vector3 translate, Texture2D texture) {
+         Vector3[] verts = {
+            new Vector3(0, 0, 0), new Vector3(0, 2, 0), new Vector3(1, 2, 0), new Vector3(1, 0, 0),
+        };
+
+        int[] tris = {
+            0, 1, 2, 0, 2, 3,
+        };
+
+        Vector2[] uvs = {
+            new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0),
+        };
+
+        Mesh door = new Mesh();
+        door.vertices = verts;
+        door.triangles = tris;
+        door.uv = uvs;
+        door.RecalculateNormals();
+    
+         GameObject s = new GameObject("door");
+        s.AddComponent<MeshFilter>();
+        s.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        s.GetComponent<MeshFilter>().mesh = door;
+
+        // change the color of the object
+        Renderer rend = s.GetComponent<Renderer>();
+
+        rend.material.mainTexture = texture;
+        return s;
+    }
     //i've rotated twice in a row with no problem with these methods.
     void rotate_right(GameObject gm) {
         gm.transform.Rotate(new Vector3(0, 90, 0));
