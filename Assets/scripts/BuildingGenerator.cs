@@ -1,27 +1,22 @@
 
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Mail;
 using UnityEngine;
 
 public class BuildingGenerator : MonoBehaviour
 {
     public int seed = 0;
-    Mesh mesh;
-   
-    //make maps square bec of c# 2d array weirdness 
-    
     private static int num_maps = 9;
     private int [][,] maps;
     private int grid_size = 10;
-    GameObject roof_go;
+    //needed to compare int arrays for neighbor dictionary
     IntArrayEqualityComparer int_comp = new IntArrayEqualityComparer();
     Dictionary<int[], GameObject> neighbors_to_roof;
 
+    //direction that the walls are made. 
     private enum direction {
         floor,
         left, right,  //vertical
-        top, bottom  //horizontal
+        top, bottom  //horizontal 
     }
 
     private enum window_type {
@@ -33,71 +28,70 @@ public class BuildingGenerator : MonoBehaviour
         single,
         french, //cannot use "double" as that is special world... so double doors are french
     }
+
+    public int[] CustomMap = new int[25];
+    public bool UseCustomMap = false;       //to use custom map, this must be set to true and the length of CustomMap must be 25
     void Start()
     {
         Random.InitState(seed);
-        // mesh = GetComponent<MeshFilter>().mesh; //do not remove
-        set_maps();
+        set_maps();                                             //creates the map array
        
+        GameObject ground = make_ground(500);                   //ground planes
+        HashSet<int> seen_maps = new HashSet<int>();            //keep track of buildings generated so no repeats
+        neighbors_to_roof = make_roof_dictionary();             //make map of neighbors -> roof 
 
-        HashSet<int> seen_maps = new HashSet<int>();
-        neighbors_to_roof = make_roof_dictionary();
+        if (UseCustomMap && CustomMap.Length == 25) {
+            int [,] new_map = new int[5,5];
+            for(int i = 0; i < CustomMap.Length; i++) {
+                int val = 0;
+                if (CustomMap[i] != 0) val = 1;
+                new_map[i / 5, i % 5] = val;
+            }
 
-        for (int i = 0; i < 3; i++) {       //run three times to generate 3 buildings. 
-            int building_offset = i * 150;
-            int map_index = Random.Range(0, num_maps);
-            while (seen_maps.Contains(map_index)) map_index = Random.Range(0, num_maps - 1);    //get new map
-            seen_maps.Add(map_index); //add new map to seen list.
-            int [,] selected_map = maps[map_index];
+            generate_building(new_map, grid_size, 0);
+        } else { 
+            for (int i = 0; i < 3; i++) {                           //run three times to generate 3 buildings. 
+                int building_offset = i * 150;                      //offset so buildings generate in z direction
+                int map_index = Random.Range(0, num_maps);
+                while (seen_maps.Contains(map_index)) map_index = Random.Range(0, num_maps - 1);    //get new map
+                seen_maps.Add(map_index);                                                           //add new map to seen list.
+                int [,] selected_map = maps[map_index];
 
-          
-            generate_building(selected_map, grid_size, building_offset);
             
+                generate_building(selected_map, grid_size, building_offset);
+                
+            }
         }
+    } 
+    //make the ground plane that lies in xz plane.
+    GameObject make_ground(int size) {
+        Vector3[] verts = {new Vector3(0,0,0), new Vector3(0, 0, -size), new Vector3(size, 0, -size), new Vector3(size, 0, 0)};
+        int [] tris = {0, 1, 2, 0, 2, 3};
+        System.Array.Reverse(tris);
+        Mesh m = new Mesh();
+        m.vertices = verts;
+        m.triangles = tris;
+        m.RecalculateNormals();
 
-        // generate_building(maps[4], grid_size, 0);
+        GameObject output = new GameObject("ground plane");
+        output.AddComponent<MeshFilter>();
+        output.AddComponent<MeshRenderer>();
+        
+        // associate the mesh with this object
+        output.GetComponent<MeshFilter>().mesh = m;
 
-        // GameObject window = generate_window(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_blue_window());
-        // window.transform.Rotate(new Vector3(0, 180, 0));
-        // window.transform.Translate(new Vector3(1, 0, 0), Space.World);
-        // window.transform.Translate(new Vector3(0, 0, 1), Space.World);
-        // rotate_window_left(window);
-        // rotate_window_left(window);
+        // change the color of the object
+        Renderer rend = output.GetComponent<Renderer>();
 
-        //place windows and doors slightly offset
-        // float offset = 0.01f;
-        // Vector3[] verts = {new Vector3(1.5f,0,0), new Vector3(1.5f,0,1), new Vector3(2.5f,0,0)};    
-        // for (int i = 0; i < verts.Length; i++) {
-        //     verts[i] += new Vector3(offset, offset, offset);
-        // }
-        // int [] tris = {0, 1, 2};
-        // Mesh m = new Mesh();
-        // m.vertices = verts;
-        // m.triangles = tris;
-        // mesh_to_game_object(m);
-        // mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.top));
-        // mesh_to_game_object(make_grid(grid_size, grid_size, 10, 10, direction.vertical));   
-
-        // test_house();
-       
-        // GameObject roof_1 = generate_cross_hip_roof(new Vector3(0, 0, 0), new Vector3(0,0,0));
-        // GameObject roof_2 = generate_normal_roof();
-        // roof_2.transform.Rotate(new Vector3(0, 90, 0));
-        // roof_2.transform.Translate(new Vector3(-grid_size, 0, -grid_size / 2));
-        // roof_go.transform.Translate(new Vector3(- grid_size  / 2, 0,  -grid_size / 2));
-        // rotate_right(roof_1);
-        // rotate_left(roof_1);
-        // rotate_left(roof_1);
-
-        // generate_building(maps[6], grid_size, 0);
-        // generate_cross_hip_roof(new Vector3(), new Vector3());
-        // generate_double_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
-
+        // rend.material.color = Color.green;
+        rend.material.color = new Color(63, 155, 11) / 255.0f;
+        return output;    
     }
 
     //generate roofs.
-    //generate a normal roof - basically a triangular prism.    
-    GameObject generate_normal_roof(Vector3 rotate, Vector3 translate) {
+    
+    //generate a normal roof - basically a triangular prism.   
+    GameObject generate_normal_roof() {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
         Vector3[] verts = {
@@ -147,11 +141,11 @@ public class BuildingGenerator : MonoBehaviour
         // rend.material.color = Color.green;
         rend.material.mainTexture = get_texture_stone();
         // s.transform.Rotate(new Vector3(0, 90, 0));
-        roof_go = s;
+
         return s;
     }
-
-    GameObject generate_cross_hip_roof(Vector3 rotate, Vector3 translate) {
+    //generate "L" shaped roof.
+    GameObject generate_cross_hip_roof() {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
         Vector3[] verts = {
@@ -208,12 +202,13 @@ public class BuildingGenerator : MonoBehaviour
         // rend.material.color = Color.green;
         rend.material.mainTexture = get_texture_stone();
         // s.transform.Rotate(new Vector3(0, 90, 0));
-        roof_go = s;
+
         return s;
 
     }
 
-    GameObject generate_cross_gable_roof(Vector3 rotate, Vector3 translate) {
+    // Generate "T" shaped roof
+    GameObject generate_cross_gable_roof() {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
         Vector3[] verts = {
@@ -279,21 +274,23 @@ public class BuildingGenerator : MonoBehaviour
         // rend.material.color = Color.green;
         rend.material.mainTexture = get_texture_stone();
         // s.transform.Rotate(new Vector3(0, 90, 0));
-        roof_go = s;
         return s;
     }
 
     //generate windows
 
+    //helper function to generate windows based on a specified type. 
     GameObject generate_window_wrapper(Texture2D texture, window_type win) {
         if (win == window_type.square) {
-            return generate_window(new Vector3(0,0,0), new Vector3(0,0,0), texture);
+            return generate_window(texture);
         } else if (win == window_type.diamond) {
-            return generate_window_round(new Vector3(0,0,0), new Vector3(0,0,0), texture);
+            return generate_window_diamond(texture);
         }
         return null;    //should never do so.
     }
-    GameObject generate_window(Vector3 rotate, Vector3 translate, Texture2D texture) {
+
+    //generate a square window
+    GameObject generate_window(Texture2D texture) {
         Vector3[] verts = {
             new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0),
         };
@@ -326,7 +323,8 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
-    GameObject generate_window_round(Vector3 rotate, Vector3 translate, Texture2D texture) {
+    //generate a diamond window 
+    GameObject generate_window_diamond(Texture2D texture) {
         Vector3[] verts = {
             new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 0, 0), new Vector3(0, -1, 0), new Vector3(-1, 0, 0)
         };
@@ -362,16 +360,19 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
+    //generate doors
+    //wrapper to help generate type of door based on door type
     GameObject generate_door_wrapper(Texture2D texture, door_type door) {
         if (door == door_type.single) {
-            return generate_door(new Vector3(), new Vector3(), texture);
+            return generate_door(texture);
         } else if (door == door_type.french) {
-            return generate_double_door(new Vector3(), new Vector3(), texture);
+            return generate_double_door(texture);
         }
         return null;
     }
-    //generate doors
-    GameObject generate_door(Vector3 rotate, Vector3 translate, Texture2D texture) {
+
+    //generate basic door
+    GameObject generate_door(Texture2D texture) {
          Vector3[] verts = {
             new Vector3(0, 0, 0), new Vector3(0, 2, 0), new Vector3(1, 2, 0), new Vector3(1, 0, 0),
         };
@@ -404,8 +405,9 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
-    GameObject generate_double_door(Vector3 rotate, Vector3 translate, Texture2D texture) {
-        GameObject temp = generate_door(rotate, translate, texture);
+    //generate double (or door_type.french) type door. is exactly twice as wide as basic door generated by generate_door
+    GameObject generate_double_door(Texture2D texture) {
+        GameObject temp = generate_door(texture);
         Mesh mesh = temp.GetComponent<MeshFilter>().mesh;
         Vector3[] verts = mesh.vertices;
         verts[2].x *= 2;
@@ -416,17 +418,20 @@ public class BuildingGenerator : MonoBehaviour
 
         return temp;
     }
+
+    //rotation methods for roofs.
     //i've rotated twice in a row with no problem with these methods.
-    void rotate_right(GameObject gm) {
+    void rotate_roof_right(GameObject gm) {
         gm.transform.Rotate(new Vector3(0, 90, 0));
         gm.transform.Translate(new Vector3(-grid_size, 0, 0));
     }
 
-    void rotate_left(GameObject gm) {
+    void rotate_roof_left(GameObject gm) {
         gm.transform.Rotate(new Vector3(0, -90, 0));
         gm.transform.Translate(new Vector3(0, 0, -grid_size));
     }
 
+    //rotate methods for windows
     //puts on left wall            
     void rotate_window_right(GameObject gm) {
         gm.transform.Rotate(new Vector3(0, 90, 0));
@@ -442,48 +447,52 @@ public class BuildingGenerator : MonoBehaviour
     
     //generate a single building.
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
+        float value = Random.value;
+
+        //randomly decide on textures 
         Texture2D wall_texture;
-        if (true) {
-            // wall_texture = get_texture_brick();
+        if (value > 0.5f) {
             wall_texture = get_texture_brick();
         } else {
-            wall_texture = get_texture_checkerboard();
+            wall_texture = get_texture_stone();
         }
 
         Texture2D roof_texture;
-        if (true) {
+        if (value > 0.5f) {
             roof_texture = get_texture_stone(); //i didn't set the uvs in this so its just going to be a solid color.
         } else {
-            roof_texture = get_texture_checkerboard();
+            roof_texture = get_red_texture();
         }
 
         Texture2D window_texture;
-        if (true) {
+        if  (value > 0.5f) {
             window_texture = get_texture_blue_window(); //i didn't set the uvs in this so its just going to be a solid color.
         } else {
             window_texture = get_texture_checkerboard();
         }
 
         Texture2D door_texture;
-        if (true) {
-            door_texture = get_texture_brown_door();
+        if (value > 0.5f) {
+            door_texture = get_brown_texture();
         } else {
-            door_texture = get_texture_checkerboard();
+            door_texture = get_texture_brown_door();
         }
 
+        //randomly decide on window and door types.
         window_type win_type;
-        if (true) {
-            win_type = window_type.diamond;
+        if (value > 0.5f) {
+            win_type = window_type.square;
         } else {
             win_type = window_type.diamond;
         }
 
         door_type door_t;
-        if (true) {
-            door_t = door_type.french;
+        if (value > 0.5f) {
+            door_t = door_type.single;
         } else {
             door_t = door_type.french;
         }
+
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
                 for (int col = 0; col < selected_map.GetLength(1); col++) {
@@ -494,13 +503,13 @@ public class BuildingGenerator : MonoBehaviour
                         if (left_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left), wall_texture);
                             GameObject window = generate_window_wrapper(window_texture, win_type);
-                            rotate_right(window);
+                            rotate_roof_right(window);
                             window.transform.Translate(new Vector3(col * grid_size + building_offset - 0.01f, grid_size / 2, - (row) * grid_size - grid_size / 2) , Space.World);
                         } 
                         if (right_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right), wall_texture);
                             GameObject window = generate_window_wrapper(window_texture, win_type);
-                            rotate_left(window);
+                            rotate_roof_left(window);
                             window.transform.Translate(new Vector3((col) * grid_size + building_offset + 0.01f, grid_size / 2, - (row) * grid_size + grid_size / 2) , Space.World);
                         }
                         if (top_wall_possible(selected_map, row, col)) {
@@ -714,7 +723,7 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  1
         //   1
         neighbors = new int[] {1,1,1,1};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_normal_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -723,8 +732,8 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  1
         //   1
         neighbors = new int[] {0,1,1,1};
-        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_left(roof);
+        roof = generate_cross_gable_roof();
+        rotate_roof_left(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -732,9 +741,9 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  1
         //   0
         neighbors = new int[] {1,1,1,0};
-        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_left(roof);
-        rotate_left(roof);
+        roof = generate_cross_gable_roof();
+        rotate_roof_left(roof);
+        rotate_roof_left(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -742,8 +751,8 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  0
         //   1
         neighbors = new int[] {1,1,0,1};
-        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_right(roof);
+        roof = generate_cross_gable_roof();
+        rotate_roof_right(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -751,7 +760,7 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  1
         //   1
         neighbors = new int[] {1,0,1,1};
-        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_cross_gable_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -761,8 +770,8 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  1
         //   1
         neighbors = new int[] {0,0,1,1};
-        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_left(roof);
+        roof = generate_cross_hip_roof();
+        rotate_roof_left(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -770,7 +779,7 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  0
         //   1
         neighbors = new int[] {0,1,0,1};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_normal_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -778,9 +787,9 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  1
         //   0
         neighbors = new int[] {0,1,1,0};
-        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_left(roof);
-        rotate_left(roof);
+        roof = generate_cross_hip_roof();
+        rotate_roof_left(roof);
+        rotate_roof_left(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -788,7 +797,7 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  0
         //   1
         neighbors = new int[] {1,0,0,1};
-        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_cross_hip_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -796,8 +805,8 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  1
         //   0
         neighbors = new int[] {1,0,1,0};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_left(roof);
+        roof = generate_normal_roof();
+        rotate_roof_left(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -805,8 +814,8 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  0
         //   0
         neighbors = new int[] {1,1,0,0};
-        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_right(roof);
+        roof = generate_cross_hip_roof();
+        rotate_roof_right(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -816,8 +825,8 @@ public class BuildingGenerator : MonoBehaviour
         //1  1  0
         //   0
         neighbors = new int[] {1,0,0,0};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_right(roof);
+        roof = generate_normal_roof();
+        rotate_roof_right(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -825,8 +834,8 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  1
         //   0
         neighbors = new int[] {0,0,1,0};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        rotate_right(roof);
+        roof = generate_normal_roof();
+        rotate_roof_right(roof);
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -834,7 +843,7 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  0
         //   0
         neighbors = new int[] {0,1,0,0};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_normal_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -842,7 +851,7 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  0
         //   1
         neighbors = new int[] {0,0,0,1};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_normal_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -851,7 +860,7 @@ public class BuildingGenerator : MonoBehaviour
         //0  1  0
         //   0
         neighbors = new int[] {0,0,0,0};
-        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof = generate_normal_roof();
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
@@ -859,10 +868,6 @@ public class BuildingGenerator : MonoBehaviour
     }
     
 
-    // Update is called once per frame
-    void Update()
-    {
-    }
 
     //all are defined by bottom left corner and move in positive directions.
     //direction.floor = move in +x, +z
@@ -1038,14 +1043,48 @@ public class BuildingGenerator : MonoBehaviour
         return image;
     }
 
-    //generate a random_int from 0 to n - 1
-    private int random_int(int n) {
-        return (int) (Random.value * n);
+    Texture2D get_red_texture() {
+        Texture2D image = new Texture2D(128, 128);
+         for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = new Color(210, 4, 45) / 255.0f;
+                // float control_knob = (float)(x * y) / (image.height * image.width);
+                // Color color = Color.Lerp(dark, light, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
     }
 
-    //generate a random int from min to max - 1
-    private int random_int(int min, int max) {
-        return random_int(max - min) + min;
+    Texture2D get_brown_texture() {
+        Texture2D image = new Texture2D(128, 128);
+        int x_offset = 20;
+        int y_offset = 80;
+        int height = 30;
+        int width = 128 - x_offset - x_offset;
+
+        int x_offset2 = 20;
+        int y_offset2 = 10;
+        int height2 = 50;
+        int width2 = 128 - x_offset2 - x_offset2;
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color;
+                if ((x > x_offset && x < x_offset + width && y > y_offset && y < y_offset + height)
+                    || (x > x_offset2 && x < x_offset2 + width2 && y > y_offset2 && y < y_offset2 + height2)) {
+                    color = new Color(132,36,12) / 255.0f;
+                } else {
+                    color = new Color(218,109,66) / 255.0f;
+                }
+                // Color color = new Color(210, 4, 45) / 255.0f;
+                // float control_knob = (float)(x * y) / (image.height * image.width);
+                // Color color = Color.Lerp(dark, light, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
     }
 
     //cute little test function :), has no roof :(
@@ -1058,27 +1097,27 @@ public class BuildingGenerator : MonoBehaviour
         mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right), texture);        
     }  
     //Helpful in ensuring the grid is properly sized. 
-    void OnDrawGizmos() {
-        Gizmos.DrawSphere(new Vector3(0,0,0), 1);
-        Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
-        Gizmos.DrawSphere(new Vector3(9,0,9) , 0.5f);
-        Gizmos.DrawSphere(new Vector3(8,0,8) , 0.5f);
+    // void OnDrawGizmos() {
+    //     Gizmos.DrawSphere(new Vector3(0,0,0), 1);
+    //     Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
+    //     Gizmos.DrawSphere(new Vector3(9,0,9) , 0.5f);
+    //     Gizmos.DrawSphere(new Vector3(8,0,8) , 0.5f);
         
-        float grid_size = 10;
-        float cell_size = 1;
-        int steps = (int) (grid_size / cell_size);
+    //     float grid_size = 10;
+    //     float cell_size = 1;
+    //     int steps = (int) (grid_size / cell_size);
 
-        Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
-        for (int i = 0; i <= steps; i++) {
-            for (int j = 0; j <= steps; j++) {
-                float x_pos = cell_size * i; 
-                float y_pos = cell_size * j;
-                verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
-                Gizmos.DrawSphere(verts[i * steps + j], 0.1f);
-            }
-        }
-        
-    }
+    //     Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
+    //     for (int i = 0; i <= steps; i++) {
+    //         for (int j = 0; j <= steps; j++) {
+    //             float x_pos = cell_size * i; 
+    //             float y_pos = cell_size * j;
+    //             verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
+    //             Gizmos.DrawSphere(verts[i * steps + j], 0.1f);
+    //         }
+    //     }
+    // 
+    // }
 }
 
 
