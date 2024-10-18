@@ -16,6 +16,8 @@ public class BuildingGenerator : MonoBehaviour
     private int [][,] maps;
     private int grid_size = 10;
     GameObject roof_go;
+    IntArrayEqualityComparer int_comp = new IntArrayEqualityComparer();
+    Dictionary<int[], GameObject> neighbors_to_roof;
 
     private enum direction {
         floor,
@@ -30,6 +32,7 @@ public class BuildingGenerator : MonoBehaviour
        
 
         HashSet<int> seen_maps = new HashSet<int>();
+        neighbors_to_roof = make_roof_dictionary();
 
         for (int i = 0; i < 3; i++) {       //run three times to generate 3 buildings. 
             int building_offset = i * 100;
@@ -87,7 +90,8 @@ public class BuildingGenerator : MonoBehaviour
         // rotate_left(roof_1);
 
         // generate_building(maps[0], grid_size, 0);
-        generate_double_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
+        // generate_cross_hip_roof(new Vector3(), new Vector3());
+        // generate_double_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
 
     }
 
@@ -512,6 +516,7 @@ public class BuildingGenerator : MonoBehaviour
                         } if (bottom_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
                         }
+                        generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0)).transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size));
                         //selected_map[row, col]--;
                     }
                 }
@@ -589,6 +594,169 @@ public class BuildingGenerator : MonoBehaviour
         maps[1] = map2;
         maps[2] = map3;
         maps[3] = map4;
+    }
+
+    Dictionary<int[], GameObject> make_roof_dictionary() {
+        Dictionary<int[], GameObject> result = new Dictionary<int[], GameObject>();
+        //dictionary goes: [left, up, right, down] for the neighbor ordering
+        int [] neighbors;
+        GameObject roof;
+        
+        /* 4 NEIGHBORS */ /* Author's Note: This could also be remodeled. */
+        //   1
+        //1  1  1
+        //   1
+        neighbors = new int[] {1,1,1,1};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        /* 3 NEIGHBORS */
+        //   1
+        //0  1  1
+        //   1
+        neighbors = new int[] {0,1,1,1};
+        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_left(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   1
+        //1  1  1
+        //   0
+        neighbors = new int[] {1,1,1,0};
+        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_left(roof);
+        rotate_left(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   1
+        //1  1  0
+        //   1
+        neighbors = new int[] {1,1,0,1};
+        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_right(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   0
+        //1  1  1
+        //   1
+        neighbors = new int[] {1,0,1,1};
+        roof = generate_cross_gable_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        /* 2 NEIGHBORS */
+        
+        //   0
+        //0  1  1
+        //   1
+        neighbors = new int[] {0,0,1,1};
+        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_left(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   1
+        //0  1  0
+        //   1
+        neighbors = new int[] {0,1,0,1};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   1
+        //0  1  1
+        //   0
+        neighbors = new int[] {0,1,1,0};
+        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_left(roof);
+        rotate_left(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   0
+        //1  1  0
+        //   1
+        neighbors = new int[] {1,0,0,1};
+        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   0
+        //1  1  1
+        //   0
+        neighbors = new int[] {1,0,1,0};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_left(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   1
+        //1  1  0
+        //   0
+        neighbors = new int[] {1,1,0,0};
+        roof = generate_cross_hip_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_right(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        /* 1 NEIGHBOR */
+
+        //   0
+        //1  1  0
+        //   0
+        neighbors = new int[] {1,0,0,0};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_right(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   0
+        //0  1  1
+        //   0
+        neighbors = new int[] {0,0,1,0};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        rotate_right(roof);
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   1
+        //0  1  0
+        //   0
+        neighbors = new int[] {0,1,0,0};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        //   0
+        //0  1  0
+        //   1
+        neighbors = new int[] {0,0,0,1};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+        /* 0 NEIGHBORS */   /* Author's Note: This could be remodeled. */
+        //   0
+        //0  1  0
+        //   0
+        neighbors = new int[] {0,0,0,0};
+        roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
+        // roof.SetActive(false);
+        result.Add(neighbors, roof);
+
+
+        
+
+
+
+
+        
+
+        return result;
     }
     void OnDrawGizmos() {
         Gizmos.DrawSphere(new Vector3(0,0,0), 1);
@@ -765,5 +933,34 @@ public class BuildingGenerator : MonoBehaviour
     //generate a random int from min to max - 1
     private int random_int(int min, int max) {
         return random_int(max - min) + min;
+    }
+}
+
+class IntArrayEqualityComparer : IEqualityComparer<int[]>
+{
+    public bool Equals(int[] x, int[] y)
+    {
+        if (x == null || y == null || x.Length != y.Length) return false; 
+        
+        for (int i = 0; i < x.Length; i++)
+        {
+            if (x[i] != y[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //hash function, made fairly arbitrarily using some primes?? 
+    public int GetHashCode(int[] obj)
+    {
+        
+        int result = 233;
+        for (int i = 0; i < obj.Length; i++)
+        {
+            result = result * 47 + obj[i];
+        }
+        return result;
     }
 }
