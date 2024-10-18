@@ -8,11 +8,10 @@ public class BuildingGenerator : MonoBehaviour
 {
     public int seed = 0;
     Mesh mesh;
-    private int grid_verts_per_side = 85;
    
     //make maps square bec of c# 2d array weirdness 
     
-    private static int num_maps = 4;
+    private static int num_maps = 7;
     private int [][,] maps;
     private int grid_size = 10;
     GameObject roof_go;
@@ -27,7 +26,7 @@ public class BuildingGenerator : MonoBehaviour
     void Start()
     {
         Random.InitState(seed);
-        mesh = GetComponent<MeshFilter>().mesh; //do not remove
+        // mesh = GetComponent<MeshFilter>().mesh; //do not remove
         set_maps();
        
 
@@ -41,26 +40,8 @@ public class BuildingGenerator : MonoBehaviour
             seen_maps.Add(map_index); //add new map to seen list.
             int [,] selected_map = maps[map_index];
 
-            // for (int row = 0; row < selected_map.GetLength(0); row++) {
-            //     for (int col = 0; col < selected_map.GetLength(1); col++) {
-            //         if (selected_map[row, col] != 0) {
-            //             mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor));
-            //             if (left_wall_possible(selected_map, row, col)) {
-            //                 mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left));
-            //             } 
-            //             if (right_wall_possible(selected_map, row, col)) {
-            //                 mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right));
-            //             }
-            //             if (top_wall_possible(selected_map, row, col)) {
-            //                 mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - (row - 1) * grid_size, direction.top));
-            //             } if (bottom_wall_possible(selected_map, row, col)) {
-            //                 mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
-            //             }
-
-            //         }
-            //     }
-            // }
-            // generate_building(selected_map, grid_size, building_offset);
+          
+            generate_building(selected_map, grid_size, building_offset);
             
         }
 
@@ -89,7 +70,7 @@ public class BuildingGenerator : MonoBehaviour
         // rotate_left(roof_1);
         // rotate_left(roof_1);
 
-        generate_building(maps[1], grid_size, 0);
+        // generate_building(maps[6], grid_size, 0);
         // generate_cross_hip_roof(new Vector3(), new Vector3());
         // generate_double_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
 
@@ -143,7 +124,8 @@ public class BuildingGenerator : MonoBehaviour
         // change the color of the object
         Renderer rend = s.GetComponent<Renderer>();
 
-        rend.material.color = Color.green;
+        // rend.material.color = Color.green;
+        rend.material.mainTexture = get_texture_stone();
         // s.transform.Rotate(new Vector3(0, 90, 0));
         roof_go = s;
         return s;
@@ -203,7 +185,8 @@ public class BuildingGenerator : MonoBehaviour
         // change the color of the object
         Renderer rend = s.GetComponent<Renderer>();
 
-        rend.material.color = Color.green;
+        // rend.material.color = Color.green;
+        rend.material.mainTexture = get_texture_stone();
         // s.transform.Rotate(new Vector3(0, 90, 0));
         roof_go = s;
         return s;
@@ -273,7 +256,8 @@ public class BuildingGenerator : MonoBehaviour
         // change the color of the object
         Renderer rend = s.GetComponent<Renderer>();
 
-        rend.material.color = Color.green;
+        // rend.material.color = Color.green;
+        rend.material.mainTexture = get_texture_stone();
         // s.transform.Rotate(new Vector3(0, 90, 0));
         roof_go = s;
         return s;
@@ -498,27 +482,40 @@ public class BuildingGenerator : MonoBehaviour
         return image;
     }
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
+        Texture wall_texture;
+        if (true) {
+            wall_texture = get_texture_brick();
+        } else {
+            wall_texture = get_texture_checkerboard();
+        }
+
+        Texture roof_texture;
+        if (true) {
+            roof_texture = get_texture_stone(); //i didn't set the uvs in this so its just going to be a solid color.
+        } else {
+            roof_texture = get_texture_checkerboard();
+        }
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
                 for (int col = 0; col < selected_map.GetLength(1); col++) {
                     if (selected_map[row, col] > 0) {  //maybe roll to see if next floor at this spot? then loop until see all zeroes. 
                     //generate random heights. then make walls that high in the positions. 
                     //generate random heights with max height. then run algo max_height times and subtract one from each nonzero spot.
-                        mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor));
+                        mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor), wall_texture);
                         if (left_wall_possible(selected_map, row, col)) {
-                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left));
+                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left), wall_texture);
                         } 
                         if (right_wall_possible(selected_map, row, col)) {
-                            mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right));
+                            mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right), wall_texture);
                         }
                         if (top_wall_possible(selected_map, row, col)) {
-                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - (row - 1) * grid_size, direction.top));
+                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - (row - 1) * grid_size, direction.top), wall_texture);
                         } if (bottom_wall_possible(selected_map, row, col)) {
-                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
+                            mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom), wall_texture);
                         }
                         int[] neighbors = get_neighbors(selected_map, row, col);
                         GameObject roof = Instantiate(neighbors_to_roof[neighbors]);    //make a copy of the selected roof
-                        // GameObject roof = Instantiate(neighbors_to_roof[new int[] {0,0,0,1}]);
+                        roof.GetComponent<Renderer>().material.mainTexture = roof_texture;    //this is a sloppy way to change the roof texture. it should be a parameter when making them.
                         roof.SetActive(true);
                         roof.transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size), Space.World);
                         // generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0)).transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size));
@@ -568,37 +565,64 @@ public class BuildingGenerator : MonoBehaviour
         maps = new int[num_maps][,];
         int [,] map = new int[,] {
             {1, 1, 1}, 
-            {0, 1, 0}, 
-            {0, 0, 1}
+            {1, 0, 1}, 
+            {1, 1, 1}
         };
 
         int [,] map2 = new int[,] {
-            {0, 0, 1, 0},
-            {0, 1, 1, 0},
-            {0, 1, 1, 1},
-            {1, 1, 0, 1}
+            {1, 1, 1, 1},
+            {1, 0, 0, 1},
+            {1, 1, 1, 1},
+            {1, 0, 0, 1}
         };
 
         int [,] map3 = new int[,] {
             {1, 1, 1, 1, 1},
-            {1, 0, 0, 0, 0},
-            {1, 0, 0, 0, 0},
-            {1, 0, 0, 0, 0},
-            {1, 0, 0, 0, 0},
+            {1, 0, 1, 0, 1},
+            {1, 0, 1, 0, 1},
+            {1, 0, 1, 0, 1},
+            {1, 0, 1, 0, 1},
         };
 
         int [,] map4 = new int[,] {
             {1, 1, 1, 1, 1},
             {1, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1},
+        };
+
+        int [,] map5 = new int[,] {
+            {1, 1, 1, 1, 1},
             {1, 0, 0, 0, 1},
             {1, 0, 0, 0, 1},
             {1, 0, 0, 0, 1},
+            {1, 1, 0, 1, 1},
+        };
+
+        int [,] map6 = new int[,] {
+            {1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0},
+            {1, 1, 1, 1, 1},
+            {0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1},
+        };
+        
+        int [,] map7 = new int[,] {
+            {1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1},
+            {0, 0, 1, 0, 0},
+            {0, 0, 1, 0, 0},
         };
 
         maps[0] = map;
         maps[1] = map2;
         maps[2] = map3;
         maps[3] = map4;
+        maps[4] = map5;
+        maps[5] = map6;
+        maps[6] = map7;
     }
 
     //neighbors are ordered: [left, top, right, bottom]
@@ -884,7 +908,8 @@ public class BuildingGenerator : MonoBehaviour
 		}
 
         temp_mesh.vertices = verts;
-        if (d == direction.top || d == direction.right) {
+        //make sure the meshes are viewable from viewing angle.
+        if (d == direction.top || d == direction.right || d == direction.floor) {
             System.Array.Reverse(tris);
         }
 		temp_mesh.triangles = tris;
@@ -893,7 +918,7 @@ public class BuildingGenerator : MonoBehaviour
 	}
 
     //color is determined here.
-    GameObject mesh_to_game_object(Mesh mesh) {
+    GameObject mesh_to_game_object(Mesh mesh, Texture texture) {
         
         mesh.RecalculateNormals();
         GameObject s = new GameObject("terrain chunk");
@@ -909,7 +934,8 @@ public class BuildingGenerator : MonoBehaviour
         // rend.material.color = Color.blue;
         if (mesh.triangles.Length == 3) rend.material.color = Color.yellow;  //hack the coloring for "window" triangle.
         
-        rend.material.mainTexture = get_texture_brown_door();
+        // rend.material.mainTexture = get_texture_brick();
+        rend.material.mainTexture = texture;
         // color using Texture2D
         // if (terrain_selection == Terrain.Texture2D) {
         //     Texture2D texture = make_a_texture(mesh);
@@ -958,11 +984,12 @@ public class BuildingGenerator : MonoBehaviour
     }  
 
     void test_house() {
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor));
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom));
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left));
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top));
-        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right));        
+        Texture texture = get_texture_checkerboard();
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right), texture);        
     }  
 
     //generate a random_int from 0 to n - 1
