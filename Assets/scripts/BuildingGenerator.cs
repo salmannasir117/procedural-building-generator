@@ -11,7 +11,7 @@ public class BuildingGenerator : MonoBehaviour
    
     //make maps square bec of c# 2d array weirdness 
     
-    private static int num_maps = 7;
+    private static int num_maps = 9;
     private int [][,] maps;
     private int grid_size = 10;
     GameObject roof_go;
@@ -22,6 +22,16 @@ public class BuildingGenerator : MonoBehaviour
         floor,
         left, right,  //vertical
         top, bottom  //horizontal
+    }
+
+    private enum window_type {
+        square,
+        diamond,
+    }
+
+    private enum door_type {
+        single,
+        french, //cannot use "double" as that is special world... so double doors are french
     }
     void Start()
     {
@@ -34,7 +44,7 @@ public class BuildingGenerator : MonoBehaviour
         neighbors_to_roof = make_roof_dictionary();
 
         for (int i = 0; i < 3; i++) {       //run three times to generate 3 buildings. 
-            int building_offset = i * 100;
+            int building_offset = i * 150;
             int map_index = Random.Range(0, num_maps);
             while (seen_maps.Contains(map_index)) map_index = Random.Range(0, num_maps - 1);    //get new map
             seen_maps.Add(map_index); //add new map to seen list.
@@ -44,6 +54,15 @@ public class BuildingGenerator : MonoBehaviour
             generate_building(selected_map, grid_size, building_offset);
             
         }
+
+        // generate_building(maps[4], grid_size, 0);
+
+        // GameObject window = generate_window(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_blue_window());
+        // window.transform.Rotate(new Vector3(0, 180, 0));
+        // window.transform.Translate(new Vector3(1, 0, 0), Space.World);
+        // window.transform.Translate(new Vector3(0, 0, 1), Space.World);
+        // rotate_window_left(window);
+        // rotate_window_left(window);
 
         //place windows and doors slightly offset
         // float offset = 0.01f;
@@ -265,6 +284,15 @@ public class BuildingGenerator : MonoBehaviour
     }
 
     //generate windows
+
+    GameObject generate_window_wrapper(Texture2D texture, window_type win) {
+        if (win == window_type.square) {
+            return generate_window(new Vector3(0,0,0), new Vector3(0,0,0), texture);
+        } else if (win == window_type.diamond) {
+            return generate_window_round(new Vector3(0,0,0), new Vector3(0,0,0), texture);
+        }
+        return null;    //should never do so.
+    }
     GameObject generate_window(Vector3 rotate, Vector3 translate, Texture2D texture) {
         Vector3[] verts = {
             new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0),
@@ -334,6 +362,14 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
+    GameObject generate_door_wrapper(Texture2D texture, door_type door) {
+        if (door == door_type.single) {
+            return generate_door(new Vector3(), new Vector3(), texture);
+        } else if (door == door_type.french) {
+            return generate_double_door(new Vector3(), new Vector3(), texture);
+        }
+        return null;
+    }
     //generate doors
     GameObject generate_door(Vector3 rotate, Vector3 translate, Texture2D texture) {
          Vector3[] verts = {
@@ -391,21 +427,62 @@ public class BuildingGenerator : MonoBehaviour
         gm.transform.Translate(new Vector3(0, 0, -grid_size));
     }
 
+    //puts on left wall            
+    void rotate_window_right(GameObject gm) {
+        gm.transform.Rotate(new Vector3(0, 90, 0));
+        gm.transform.Translate(new Vector3(-1, 0, 0));
+    }
+
+    //puts on right wall
+    void rotate_window_left(GameObject gm) {
+        gm.transform.Rotate(new Vector3(0, -90, 0));
+        gm.transform.Translate(new Vector3(0, 0, -1));
+    }
+
     
     //generate a single building.
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
-        Texture wall_texture;
+        Texture2D wall_texture;
         if (true) {
+            // wall_texture = get_texture_brick();
             wall_texture = get_texture_brick();
         } else {
             wall_texture = get_texture_checkerboard();
         }
 
-        Texture roof_texture;
+        Texture2D roof_texture;
         if (true) {
             roof_texture = get_texture_stone(); //i didn't set the uvs in this so its just going to be a solid color.
         } else {
             roof_texture = get_texture_checkerboard();
+        }
+
+        Texture2D window_texture;
+        if (true) {
+            window_texture = get_texture_blue_window(); //i didn't set the uvs in this so its just going to be a solid color.
+        } else {
+            window_texture = get_texture_checkerboard();
+        }
+
+        Texture2D door_texture;
+        if (true) {
+            door_texture = get_texture_brown_door();
+        } else {
+            door_texture = get_texture_checkerboard();
+        }
+
+        window_type win_type;
+        if (true) {
+            win_type = window_type.diamond;
+        } else {
+            win_type = window_type.diamond;
+        }
+
+        door_type door_t;
+        if (true) {
+            door_t = door_type.french;
+        } else {
+            door_t = door_type.french;
         }
         //loop for each floor.
         for (int row = 0; row < selected_map.GetLength(0); row++) {
@@ -416,14 +493,36 @@ public class BuildingGenerator : MonoBehaviour
                         mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor), wall_texture);
                         if (left_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left), wall_texture);
+                            GameObject window = generate_window_wrapper(window_texture, win_type);
+                            rotate_right(window);
+                            window.transform.Translate(new Vector3(col * grid_size + building_offset - 0.01f, grid_size / 2, - (row) * grid_size - grid_size / 2) , Space.World);
                         } 
                         if (right_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, (col + 1) * grid_size + building_offset, -row * grid_size, direction.right), wall_texture);
+                            GameObject window = generate_window_wrapper(window_texture, win_type);
+                            rotate_left(window);
+                            window.transform.Translate(new Vector3((col) * grid_size + building_offset + 0.01f, grid_size / 2, - (row) * grid_size + grid_size / 2) , Space.World);
                         }
                         if (top_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - (row - 1) * grid_size, direction.top), wall_texture);
+                            Vector3 offset = new Vector3(0, 0, 0.01f);
+                            GameObject window = generate_window_wrapper(window_texture, win_type);
+                            rotate_window_left(window);
+                            rotate_window_left(window);
+                            window.transform.Translate(new Vector3(col * grid_size + building_offset + grid_size / 2, grid_size / 2, - (row - 1) * grid_size - 1 + 0.01f) , Space.World);
+
                         } if (bottom_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom), wall_texture);
+                                GameObject window = generate_window_wrapper(window_texture, win_type);
+                                window.transform.Translate(new Vector3(col * grid_size + building_offset + grid_size / 2, grid_size / 2, - (row) * grid_size - 0.01f) , Space.World);
+                            if (Random.value > 0.5f) {
+                                GameObject door = generate_door_wrapper(door_texture, door_t);
+                                door.transform.localScale = new Vector3(2,2,2);
+                                door.transform.Translate(new Vector3(col * grid_size + building_offset + grid_size / 2, 0, - (row) * grid_size - 0.01f) , Space.World);
+                                window.transform.Translate(new Vector3(0, 1.25f, 0), Space.World);
+                            }
+                            
+                            
                         }
                         int[] neighbors = get_neighbors(selected_map, row, col);
                         GameObject roof = Instantiate(neighbors_to_roof[neighbors]);    //make a copy of the selected roof
@@ -529,6 +628,32 @@ public class BuildingGenerator : MonoBehaviour
             {0, 0, 1, 0, 0},
         };
 
+        //S + D
+        int [,] map8 = new int[,] {
+            {1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0,},
+            {1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1,},
+            {1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1,},
+            {0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1,},
+            {1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0,},
+        };
+        
+        //<3
+        int [,] map9 = new int[,] {
+            {0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0,},
+            {1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1,},
+            {1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1,},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,},
+            {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,},
+            {0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,},
+            {0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0,},
+            {0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0,},
+            {0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0,},
+            {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,},
+        };
+
         maps[0] = map;
         maps[1] = map2;
         maps[2] = map3;
@@ -536,6 +661,8 @@ public class BuildingGenerator : MonoBehaviour
         maps[4] = map5;
         maps[5] = map6;
         maps[6] = map7;
+        maps[7] = map8;
+        maps[8] = map9;
     }
 
     //take a position in the map, return the neighbors in the below order:
@@ -931,27 +1058,27 @@ public class BuildingGenerator : MonoBehaviour
         mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right), texture);        
     }  
     //Helpful in ensuring the grid is properly sized. 
-    // void OnDrawGizmos() {
-    //     Gizmos.DrawSphere(new Vector3(0,0,0), 1);
-    //     Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
-    //     Gizmos.DrawSphere(new Vector3(9,0,9) , 0.5f);
-    //     Gizmos.DrawSphere(new Vector3(8,0,8) , 0.5f);
+    void OnDrawGizmos() {
+        Gizmos.DrawSphere(new Vector3(0,0,0), 1);
+        Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
+        Gizmos.DrawSphere(new Vector3(9,0,9) , 0.5f);
+        Gizmos.DrawSphere(new Vector3(8,0,8) , 0.5f);
         
-    //     float grid_size = 10;
-    //     float cell_size = 1;
-    //     int steps = (int) (grid_size / cell_size);
+        float grid_size = 10;
+        float cell_size = 1;
+        int steps = (int) (grid_size / cell_size);
 
-    //     Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
-    //     for (int i = 0; i <= steps; i++) {
-    //         for (int j = 0; j <= steps; j++) {
-    //             float x_pos = cell_size * i; 
-    //             float y_pos = cell_size * j;
-    //             verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
-    //             Gizmos.DrawSphere(verts[i * steps + j], 0.1f);
-    //         }
-    //     }
+        Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
+        for (int i = 0; i <= steps; i++) {
+            for (int j = 0; j <= steps; j++) {
+                float x_pos = cell_size * i; 
+                float y_pos = cell_size * j;
+                verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
+                Gizmos.DrawSphere(verts[i * steps + j], 0.1f);
+            }
+        }
         
-    // }
+    }
 }
 
 
