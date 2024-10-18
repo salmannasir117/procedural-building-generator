@@ -76,7 +76,8 @@ public class BuildingGenerator : MonoBehaviour
 
     }
 
-    //generate a normal roof - basically a triangular prism. 
+    //generate roofs.
+    //generate a normal roof - basically a triangular prism.    
     GameObject generate_normal_roof(Vector3 rotate, Vector3 translate) {
         int height = grid_size / 2;
         int midpoint = grid_size / 2;
@@ -263,6 +264,7 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
+    //generate windows
     GameObject generate_window(Vector3 rotate, Vector3 translate, Texture2D texture) {
         Vector3[] verts = {
             new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0),
@@ -332,6 +334,7 @@ public class BuildingGenerator : MonoBehaviour
         return s;
     }
 
+    //generate doors
     GameObject generate_door(Vector3 rotate, Vector3 translate, Texture2D texture) {
          Vector3[] verts = {
             new Vector3(0, 0, 0), new Vector3(0, 2, 0), new Vector3(1, 2, 0), new Vector3(1, 0, 0),
@@ -388,99 +391,8 @@ public class BuildingGenerator : MonoBehaviour
         gm.transform.Translate(new Vector3(0, 0, -grid_size));
     }
 
-    Texture2D get_texture() {
-        Texture2D image = new Texture2D(128, 128);
-        for (int y = 0; y < image.height; y++) {
-            for (int x = 0; x < image.width; x++) {
-                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
-                image.SetPixel(x, y ,color);
-            }
-        }
-        image.Apply();
-        return image;
-    }
-
-    Texture2D get_texture_checkerboard() {
-        Texture2D image = new Texture2D(128, 128);
-        int cell_size = 10;
-        for (int y = 0; y < image.height; y++) {
-            for (int x = 0; x < image.width; x++) {
-                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
-                if ((x / cell_size + y / cell_size) % 2 == 0) color = Color.black;
-                else color = Color.white;
-                image.SetPixel(x, y ,color);
-            }
-        }
-        image.Apply();
-        return image;
-    }
-
-    Texture2D get_texture_brick() {
-        Texture2D image = new Texture2D(128, 128);
-        for (int y = 0; y < image.height; y++) {
-            for (int x = 0; x < image.width; x++) {
-                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
-                Color light = new Color(221.0f / 255, 125.0f / 255, 125.0f / 255);
-                Color dark = new Color(132 / 255.0f, 32 / 255.0f, 32 / 255.0f);
-                // color = Color.Lerp(light, dark, Mathf.PerlinNoise(2 * x, 2 * y) / 2);
-                // color = Color.Lerp(light, dark, (float) x / image.height);
-                color = Color.Lerp(light, dark, Random.value);
-                image.SetPixel(x, y ,color);
-            }
-        }
-        image.Apply();
-        return image;
-    }
-
-    Texture2D get_texture_stone() {
-        Texture2D image = new Texture2D(128, 128);
-        for (int y = 0; y < image.height; y++) {
-            for (int x = 0; x < image.width; x++) {
-                Color light = new Color(164,172,180) / 255.0f;
-                Color dark = new Color(134,152,166) / 255.0f;
-                float control_knob = Random.value;
-                control_knob = Mathf.Sqrt(control_knob);        //make probability dist. shift to right side
-                Color color = Color.Lerp(light, dark, control_knob);
-                image.SetPixel(x, y ,color);
-            }
-        }
-        image.Apply();
-        return image;
-    }
-
-    Texture2D get_texture_blue_window() {
-        Texture2D image = new Texture2D(128, 128);
-        for (int y = 0; y < image.height; y++) {
-            for (int x = 0; x < image.width; x++) {
-                Color dark = new Color(66, 89, 195) / 255.0f;
-                Color light = new Color(158, 194, 255) / 255.0f;
-                float control_knob = (float)(x * y) / (image.height * image.width);
-                Color color = Color.Lerp(dark, light, control_knob);
-                image.SetPixel(x, y ,color);
-            }
-        }
-        image.Apply();
-        return image;
-    }
-
-    Texture2D get_texture_brown_door() {
-       int cell_size = 10;
-       Texture2D image = new Texture2D(128, 128);
-        for (int y = 0; y < image.height; y++) {
-            for (int x = 0; x < image.width; x++) {
-                Color color;
-                Color dark = new Color(110, 38, 14) / 255.0f;
-                Color light = new Color(233, 116, 81) / 255.0f;
-                if ((x / cell_size) % 2 == 0) color = dark;
-                else color = light;
-                // float control_knob = (float)(x * y) / (image.height * image.width);
-                // Color color = Color.Lerp(dark, light, control_knob);
-                image.SetPixel(x, y ,color);
-            }
-        }
-        image.Apply();
-        return image;
-    }
+    
+    //generate a single building.
     void generate_building(int [,] selected_map, int grid_size, int building_offset) {
         Texture wall_texture;
         if (true) {
@@ -499,8 +411,8 @@ public class BuildingGenerator : MonoBehaviour
         for (int row = 0; row < selected_map.GetLength(0); row++) {
                 for (int col = 0; col < selected_map.GetLength(1); col++) {
                     if (selected_map[row, col] > 0) {  //maybe roll to see if next floor at this spot? then loop until see all zeroes. 
-                    //generate random heights. then make walls that high in the positions. 
-                    //generate random heights with max height. then run algo max_height times and subtract one from each nonzero spot.
+                        //generate random heights. then make walls that high in the positions. 
+                        //generate random heights with max height. then run algo max_height times and subtract one from each nonzero spot.
                         mesh_to_game_object(make_grid(grid_size, grid_size,  col * grid_size + building_offset, -row * grid_size, direction.floor), wall_texture);
                         if (left_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, -row * grid_size, direction.left), wall_texture);
@@ -518,12 +430,12 @@ public class BuildingGenerator : MonoBehaviour
                         roof.GetComponent<Renderer>().material.mainTexture = roof_texture;    //this is a sloppy way to change the roof texture. it should be a parameter when making them.
                         roof.SetActive(true);
                         roof.transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size), Space.World);
-                        // generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0)).transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size));
-                        //selected_map[row, col]--;
                     }
                 }
             }
     }
+
+    //check if specific wall type is possible in "map" at (row, col)
     bool left_wall_possible(int [,] map, int row, int col) {
         if (map[row, col] == 0) return false;
         //must be a floor at this cell.
@@ -561,6 +473,7 @@ public class BuildingGenerator : MonoBehaviour
     }
     
     
+    //set the floor plans for the map array
     void set_maps() {
         maps = new int[num_maps][,];
         int [,] map = new int[,] {
@@ -625,6 +538,7 @@ public class BuildingGenerator : MonoBehaviour
         maps[6] = map7;
     }
 
+    //take a position in the map, return the neighbors in the below order:
     //neighbors are ordered: [left, top, right, bottom]
     //if we are at the maps edge, then that neighbor will be counted as 0.
     int [] get_neighbors(int [,] map, int row, int col) {
@@ -660,9 +574,11 @@ public class BuildingGenerator : MonoBehaviour
 
         return nbs;
     }
+
+    //create a dictionary that takes in a list of neighbors and outputs the roof object that should go at that position.
+    //dictionary goes: [left, up, right, down] for the neighbor ordering
     Dictionary<int[], GameObject> make_roof_dictionary() {
         Dictionary<int[], GameObject> result = new Dictionary<int[], GameObject>(int_comp);
-        //dictionary goes: [left, up, right, down] for the neighbor ordering
         int [] neighbors;
         GameObject roof;
         
@@ -812,50 +728,15 @@ public class BuildingGenerator : MonoBehaviour
         roof.SetActive(false);
         result.Add(neighbors, roof);
 
-
-        
-
-
-
-
-        
-
         return result;
     }
-    void OnDrawGizmos() {
-        Gizmos.DrawSphere(new Vector3(0,0,0), 1);
-        Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
-        Gizmos.DrawSphere(new Vector3(9,0,9) , 0.5f);
-        Gizmos.DrawSphere(new Vector3(8,0,8) , 0.5f);
-        
-        float grid_size = 10;
-        float cell_size = 1;
-        int steps = (int) (grid_size / cell_size);
-
-        Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
-        for (int i = 0; i <= steps; i++) {
-            for (int j = 0; j <= steps; j++) {
-                float x_pos = cell_size * i; 
-                float y_pos = cell_size * j;
-                verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
-                Gizmos.DrawSphere(verts[i * steps + j], 0.1f);
-            }
-        }
-        
-    }
+    
 
     // Update is called once per frame
     void Update()
     {
-        // roof_go.transform.Rotate(new Vector3(0, -0.1f, 0));
-        // roof_go.transform.Rotate(new Vector3(0, -0.1f, 0));
-        // roof_go.transform.Translate(new Vector3( grid_size  / 2, grid_size / 2, 0));
-        
-        // roof_go.transform.RotateAround(new Vector3(grid_size / 2, grid_size / 2, 0),)
     }
 
-    
-    //must rewrite.
     //all are defined by bottom left corner and move in positive directions.
     //direction.floor = move in +x, +z
     //direction.horizontal = move in +x, +y
@@ -917,80 +798,118 @@ public class BuildingGenerator : MonoBehaviour
         return temp_mesh;
 	}
 
-    //color is determined here.
+    //texture is determined here.
     GameObject mesh_to_game_object(Mesh mesh, Texture texture) {
         
         mesh.RecalculateNormals();
-        GameObject s = new GameObject("terrain chunk");
+        GameObject s = new GameObject("wall");
         s.AddComponent<MeshFilter>();
         s.AddComponent<MeshRenderer>();
         
         // associate the mesh with this object
         s.GetComponent<MeshFilter>().mesh = mesh;
 
-        // change the color of the object
+        // change the texture of the object
         Renderer rend = s.GetComponent<Renderer>();
-
-        // rend.material.color = Color.blue;
-        if (mesh.triangles.Length == 3) rend.material.color = Color.yellow;  //hack the coloring for "window" triangle.
-        
-        // rend.material.mainTexture = get_texture_brick();
         rend.material.mainTexture = texture;
-        // color using Texture2D
-        // if (terrain_selection == Terrain.Texture2D) {
-        //     Texture2D texture = make_a_texture(mesh);
-        //     rend.material.mainTexture = texture;
-        // } else {
-        //     get the renderer, attach a material that uses a vertex shader 
-        //     thus, we can color each vertex and it mixes the colors. 
-        //     note: this method is an alternative to using a texture 2D and potentially allows for a different gradient of colors to be made
-        //     Material material = new Material(Shader.Find("Particles/Standard Surface"));
-        //     rend.material = material;
-        // }
        
         return s;
     }
 
-    private Mesh create_mesh() {
-        Mesh new_mesh = new Mesh();
-        Vector3[] verts = new Vector3 [] {new Vector3(0,0,0), new Vector3(0,0,1), new Vector3(1,0,0), new Vector3(1,0,1)};
-        int[] tris = new int [] {0 , 1, 2, 3, 2, 1};
-        new_mesh.vertices = verts;
-        new_mesh.triangles = tris;
-        return new_mesh;
+    //procedurally generated textures.
+    Texture2D get_texture() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
     }
 
-    // make a triangle from three vertex indices (clockwise order)
-	void MakeTri(int i1, int i2, int i3, int ntris, int [] tris) {
-		int index = ntris * 3;  // figure out the base index for storing triangle indices
+    Texture2D get_texture_checkerboard() {
+        Texture2D image = new Texture2D(128, 128);
+        int cell_size = 10;
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
+                if ((x / cell_size + y / cell_size) % 2 == 0) color = Color.black;
+                else color = Color.white;
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
 
-		tris[index]     = i1;
-		tris[index + 1] = i2;
-		tris[index + 2] = i3;
-	}
+    Texture2D get_texture_brick() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color = Color.Lerp(Color.black, Color.white, (float)x / image.width);
+                Color light = new Color(221.0f / 255, 125.0f / 255, 125.0f / 255);
+                Color dark = new Color(132 / 255.0f, 32 / 255.0f, 32 / 255.0f);
+                // color = Color.Lerp(light, dark, Mathf.PerlinNoise(2 * x, 2 * y) / 2);
+                // color = Color.Lerp(light, dark, (float) x / image.height);
+                color = Color.Lerp(light, dark, Random.value);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
 
-	// make a quadrilateral from four vertex indices (clockwise order)
-	void MakeQuad(int i1, int i2, int i3, int i4, int ntris, int[] tris) {
-		MakeTri (i1, i2, i3, ntris, tris);
-		MakeTri (i3, i4, i1, ntris + 1, tris);
-	}
-    
-    private void display_mesh(Mesh new_mesh) {
-        // mesh = GetComponent<MeshFilter>.mesh;
-        mesh.Clear();
-        mesh.vertices = new_mesh.vertices;
-        mesh.triangles = new_mesh.triangles;
-        mesh.RecalculateNormals();
-    }  
+    Texture2D get_texture_stone() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color light = new Color(164,172,180) / 255.0f;
+                Color dark = new Color(134,152,166) / 255.0f;
+                float control_knob = Random.value;
+                control_knob = Mathf.Sqrt(control_knob);        //make probability dist. shift to right side
+                Color color = Color.Lerp(light, dark, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
 
-    void test_house() {
-        Texture texture = get_texture_checkerboard();
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor), texture);
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom), texture);
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left), texture);
-        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top), texture);
-        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right), texture);        
-    }  
+    Texture2D get_texture_blue_window() {
+        Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color dark = new Color(66, 89, 195) / 255.0f;
+                Color light = new Color(158, 194, 255) / 255.0f;
+                float control_knob = (float)(x * y) / (image.height * image.width);
+                Color color = Color.Lerp(dark, light, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
+
+    Texture2D get_texture_brown_door() {
+       int cell_size = 10;
+       Texture2D image = new Texture2D(128, 128);
+        for (int y = 0; y < image.height; y++) {
+            for (int x = 0; x < image.width; x++) {
+                Color color;
+                Color dark = new Color(110, 38, 14) / 255.0f;
+                Color light = new Color(233, 116, 81) / 255.0f;
+                if ((x / cell_size) % 2 == 0) color = dark;
+                else color = light;
+                // float control_knob = (float)(x * y) / (image.height * image.width);
+                // Color color = Color.Lerp(dark, light, control_knob);
+                image.SetPixel(x, y ,color);
+            }
+        }
+        image.Apply();
+        return image;
+    }
 
     //generate a random_int from 0 to n - 1
     private int random_int(int n) {
@@ -1001,7 +920,40 @@ public class BuildingGenerator : MonoBehaviour
     private int random_int(int min, int max) {
         return random_int(max - min) + min;
     }
+
+    //cute little test function :), has no roof :(
+    void test_house() {
+        Texture texture = get_texture_checkerboard();
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.floor), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.bottom), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, 0, direction.left), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, 0, grid_size, direction.top), texture);
+        mesh_to_game_object(make_grid(grid_size, grid_size, grid_size, 0, direction.right), texture);        
+    }  
+    //Helpful in ensuring the grid is properly sized. 
+    // void OnDrawGizmos() {
+    //     Gizmos.DrawSphere(new Vector3(0,0,0), 1);
+    //     Gizmos.DrawSphere(new Vector3(10,0,10) , 0.5f);
+    //     Gizmos.DrawSphere(new Vector3(9,0,9) , 0.5f);
+    //     Gizmos.DrawSphere(new Vector3(8,0,8) , 0.5f);
+        
+    //     float grid_size = 10;
+    //     float cell_size = 1;
+    //     int steps = (int) (grid_size / cell_size);
+
+    //     Vector3[] verts = new Vector3[(steps + 1) * (steps + 1)];
+    //     for (int i = 0; i <= steps; i++) {
+    //         for (int j = 0; j <= steps; j++) {
+    //             float x_pos = cell_size * i; 
+    //             float y_pos = cell_size * j;
+    //             verts [i * steps + j] = new Vector3(x_pos, 0, y_pos);
+    //             Gizmos.DrawSphere(verts[i * steps + j], 0.1f);
+    //         }
+    //     }
+        
+    // }
 }
+
 
 class IntArrayEqualityComparer : IEqualityComparer<int[]>
 {
