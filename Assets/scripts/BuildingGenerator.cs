@@ -89,7 +89,7 @@ public class BuildingGenerator : MonoBehaviour
         // rotate_left(roof_1);
         // rotate_left(roof_1);
 
-        // generate_building(maps[0], grid_size, 0);
+        generate_building(maps[1], grid_size, 0);
         // generate_cross_hip_roof(new Vector3(), new Vector3());
         // generate_double_door(new Vector3(0,0,0), new Vector3(0,0,0), get_texture_checkerboard()).transform.Translate(new Vector3(0, 1, 0));
 
@@ -516,7 +516,12 @@ public class BuildingGenerator : MonoBehaviour
                         } if (bottom_wall_possible(selected_map, row, col)) {
                             mesh_to_game_object(make_grid(grid_size, grid_size, col * grid_size + building_offset, - row * grid_size, direction.bottom));
                         }
-                        generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0)).transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size));
+                        int[] neighbors = get_neighbors(selected_map, row, col);
+                        GameObject roof = Instantiate(neighbors_to_roof[neighbors]);    //make a copy of the selected roof
+                        // GameObject roof = Instantiate(neighbors_to_roof[new int[] {0,0,0,1}]);
+                        roof.SetActive(true);
+                        roof.transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size), Space.World);
+                        // generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0)).transform.Translate(new Vector3(col * grid_size + building_offset, grid_size, -row * grid_size));
                         //selected_map[row, col]--;
                     }
                 }
@@ -596,8 +601,43 @@ public class BuildingGenerator : MonoBehaviour
         maps[3] = map4;
     }
 
+    //neighbors are ordered: [left, top, right, bottom]
+    //if we are at the maps edge, then that neighbor will be counted as 0.
+    int [] get_neighbors(int [,] map, int row, int col) {
+        int[] nbs = new int[4];
+        
+        //left neighbor
+        if (col == 0) {
+            nbs[0] = 0;
+        } else {
+            nbs[0] = map[row, col - 1];
+        }
+
+        //top neighbor
+        if (row == 0) {
+            nbs[1] = 0;
+        } else {
+            nbs[1] = map[row - 1, col];
+        }
+
+        //right neighbor
+        if (col == map.GetLength(1) - 1) {
+            nbs[2] = 0;
+        } else {
+            nbs[2] = map[row, col + 1];
+        }
+
+        //bottom neighbor
+        if (row == map.GetLength(0) - 1) {
+            nbs[3] = 0;
+        } else {
+            nbs[3] = map[row + 1, col];
+        }
+
+        return nbs;
+    }
     Dictionary<int[], GameObject> make_roof_dictionary() {
-        Dictionary<int[], GameObject> result = new Dictionary<int[], GameObject>();
+        Dictionary<int[], GameObject> result = new Dictionary<int[], GameObject>(int_comp);
         //dictionary goes: [left, up, right, down] for the neighbor ordering
         int [] neighbors;
         GameObject roof;
@@ -745,7 +785,7 @@ public class BuildingGenerator : MonoBehaviour
         //   0
         neighbors = new int[] {0,0,0,0};
         roof = generate_normal_roof(new Vector3(0,0,0), new Vector3(0,0,0));
-        // roof.SetActive(false);
+        roof.SetActive(false);
         result.Add(neighbors, roof);
 
 
